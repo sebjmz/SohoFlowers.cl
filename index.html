@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Soho Flowers | Flores premium hoy, sin vueltas | Viña · Reñaca · Concón</title>
+<meta name="description" content="Arreglos de autor con entrega el mismo día y hora elegida. 12 cuotas sin interés con Mercado Pago, PayPal desde cualquier parte del mundo, express con +50% solo sobre el envío. Sin recargos ocultos.">
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500;1,600&family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script>
+tailwind.config = { theme: { extend: {
+  colors: { ink:'#0E1512', gold:'#C5A059', ivory:'#FBFAF8', smoke:'#6E6E68' },
+  fontFamily: { serif:['"Cormorant Garamond"','serif'], sans:['Manrope','system-ui','sans-serif'] }
+}}};
+</script>
+<style>
+  html{scroll-behavior:smooth}
+  .display{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:500;letter-spacing:-.01em}
+  .micro{font-size:9px;letter-spacing:.22em;text-transform:uppercase;font-weight:700}
+  .btn-gold{background:#C5A059;color:#0E1512;transition:.25s}
+  .btn-gold:hover{background:#0E1512;color:#C5A059}
+  .btn-line{border:1px solid rgba(14,21,18,.25);transition:.25s}
+  .btn-line:hover{border-color:#C5A059;color:#C5A059}
+  .chip{border:1px solid rgba(14,21,18,.15);transition:.2s}
+  .chip.on{border-color:#C5A059;background:rgba(197,160,89,.08);box-shadow:0 0 0 1px #C5A059}
+  .chip:disabled{opacity:.4;cursor:not-allowed}
+  .fade-up{opacity:0;transform:translateY(14px);animation:fu .7s cubic-bezier(.16,1,.3,1) forwards}
+  @keyframes fu{to{opacity:1;transform:none}}
+  .hide-scroll::-webkit-scrollbar{display:none}
+  input,textarea,select{outline:none}
+  input:focus,textarea:focus{border-color:#C5A059!important}
+</style>
+</head>
+<body class="bg-ivory text-ink font-sans antialiased">
+
+<!-- ══════════ HEADER MÍNIMO ══════════ -->
+<header class="sticky top-0 z-40 bg-ivory/90 backdrop-blur-md border-b border-ink/5">
+  <div class="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
+    <a href="#" class="display text-2xl">Soho <span class="text-gold">Flowers</span></a>
+    <nav class="flex items-center gap-4 md:gap-6">
+      <a href="/seguimiento.html" class="micro hidden md:block opacity-70 hover:opacity-100">Seguir mi pedido</a>
+      <button onclick="openCheckout()" class="micro btn-line px-4 py-2 rounded-full">Mi pedido <span id="cart-count" class="text-gold">0</span></button>
+    </nav>
+  </div>
+  <!-- BARRA DE PROMESAS (siempre visible) -->
+  <div class="bg-ink text-ivory/90">
+    <div class="max-w-6xl mx-auto px-4 h-8 flex items-center gap-6 overflow-x-auto hide-scroll micro whitespace-nowrap">
+      <span class="text-gold">12 cuotas sin interés · Mercado Pago</span>
+      <span>PayPal desde cualquier parte del mundo</span>
+      <span>Express 1–2 h = solo +50% del envío</span>
+      <span>Sin costos fijos extra ni recargos al ramo</span>
+      <span>Envío de cortesía sobre $69.990</span>
+    </div>
+  </div>
+</header>
+
+<!-- ══════════ HERO: INTENCIÓN INMEDIATA ══════════ -->
+<section class="max-w-6xl mx-auto px-4 pt-14 md:pt-20 pb-10 text-center">
+  <p class="micro text-gold fade-up">Viña · Reñaca · Concón · Despacho hoy</p>
+  <h1 class="display text-5xl md:text-8xl leading-[.95] mt-4 fade-up" style="animation-delay:.1s">
+    Llegan hoy.<br>Impecables.<br><span class="text-gold">Sin vueltas.</span>
+  </h1>
+  <p class="max-w-xl mx-auto mt-5 text-sm md:text-base opacity-70 fade-up" style="animation-delay:.2s">
+    Eliges fecha y hora en 60 segundos. Pagas en cuotas o desde el extranjero.
+    Nosotros nos encargamos del resto, con foto del arreglo antes de salir y seguimiento en vivo.
+  </p>
+
+  <!-- BOTONES DE INTENCIÓN: el embudo parte AQUÍ -->
+  <div class="mt-8 flex flex-col md:flex-row items-center justify-center gap-3 fade-up" style="animation-delay:.3s">
+    <button onclick="startFunnel('hoy')" class="btn-gold micro px-8 py-4 rounded-full w-full md:w-auto">Lo necesito hoy →</button>
+    <button onclick="startFunnel('fecha')" class="btn-line micro px-8 py-4 rounded-full w-full md:w-auto">Elegir fecha y hora</button>
+    <a href="#coleccion" class="micro underline underline-offset-4 opacity-60 hover:opacity-100">Ver colección</a>
+  </div>
+
+  <p id="express-status" class="micro mt-4 text-gold"></p>
+
+  <div class="mt-8 flex flex-wrap justify-center gap-x-6 gap-y-2 micro opacity-60 fade-up" style="animation-delay:.4s">
+    <span>★ 4.9 en +100 reseñas Google</span><span>·</span>
+    <span>Foto del arreglo antes de salir</span><span>·</span>
+    <span>Seguimiento en vivo</span><span>·</span>
+    <span>Garantía de frescura</span>
+  </div>
+</section>
+
+<!-- ══════════ OCASIÓN (3 puertas, no 10) ══════════ -->
+<section id="ocasiones" class="max-w-6xl mx-auto px-4 pb-4">
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+    <button onclick="filterOccasion('homenajes')" data-occ="homenajes" class="occ-btn chip rounded-2xl p-6 text-left hover:border-gold">
+      <p class="micro text-gold">Entrega prioritaria</p>
+      <h3 class="display text-3xl mt-1">Homenajes</h3>
+      <p class="text-xs opacity-60 mt-1">Condolencias y aniversarios. Llegamos antes del servicio, garantizado.</p>
+    </button>
+    <button onclick="filterOccasion('romance')" data-occ="romance" class="occ-btn chip rounded-2xl p-6 text-left hover:border-gold">
+      <p class="micro text-gold">El clásico que nunca falla</p>
+      <h3 class="display text-3xl mt-1">Romance</h3>
+      <p class="text-xs opacity-60 mt-1">Rosas de exportación y diseños de autor para decirlo sin palabras.</p>
+    </button>
+    <button onclick="filterOccasion('celebracion')" data-occ="celebracion" class="occ-btn chip rounded-2xl p-6 text-left hover:border-gold">
+      <p class="micro text-gold">Para festejar a tiempo</p>
+      <h3 class="display text-3xl mt-1">Celebración</h3>
+      <p class="text-xs opacity-60 mt-1">Cumpleaños, graduaciones y cierres de negocio con presencia.</p>
+    </button>
+  </div>
+</section>
+
+<!-- ══════════ CATÁLOGO CORTO (decisión rápida) ══════════ -->
+<section id="coleccion" class="max-w-6xl mx-auto px-4 py-10">
+  <div class="flex items-end justify-between mb-6">
+    <h2 class="display text-4xl md:text-5xl" id="catalog-title">Colección completa</h2>
+    <button onclick="filterOccasion('todos')" class="micro underline underline-offset-4 opacity-60 hover:opacity-100">Ver todos</button>
+  </div>
+  <div id="product-grid" class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6"></div>
+</section>
+
+<!-- ══════════ LA REGLA SOHO (transparencia = conversión) ══════════ -->
+<section class="bg-ink text-ivory py-16">
+  <div class="max-w-6xl mx-auto px-4">
+    <p class="micro text-gold text-center">Sin letras chicas</p>
+    <h2 class="display text-4xl md:text-6xl text-center mt-2">La Regla Soho.</h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mt-10 text-sm">
+      <div><p class="display text-3xl text-gold">01</p><p class="mt-2 opacity-80">El precio que ves es el precio del ramo. Sin costos fijos extra de $9.990, sin recargos porcentuales, sin sorpresas al pagar.</p></div>
+      <div><p class="display text-3xl text-gold">02</p><p class="mt-2 opacity-80">El express 1–2 h suma solo un 50% al <em>valor del envío</em>, nunca al ramo. Y sobre $69.990 el envío es de cortesía.</p></div>
+      <div><p class="display text-3xl text-gold">03</p><p class="mt-2 opacity-80">Pagas como quieras: hasta 12 cuotas sin interés con Mercado Pago, o PayPal en dólares desde cualquier parte del mundo.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ CÓMO FUNCIONA ══════════ -->
+<section class="max-w-6xl mx-auto px-4 py-16">
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+    <div><p class="display text-6xl text-gold">1</p><h3 class="display text-2xl mt-2">Eliges en 60 segundos</h3><p class="text-xs opacity-60 mt-2">Arreglo, fecha y bloque horario. Sin registros, sin clubes, sin formularios eternos.</p></div>
+    <div><p class="display text-6xl text-gold">2</p><h3 class="display text-2xl mt-2">Pagas seguro</h3><p class="text-xs opacity-60 mt-2">Mercado Pago (12 cuotas sin interés) o PayPal internacional. Confirmación inmediata por correo.</p></div>
+    <div><p class="display text-6xl text-gold">3</p><h3 class="display text-2xl mt-2">Llegamos con prueba</h3><p class="text-xs opacity-60 mt-2">Foto del arreglo antes de salir y seguimiento en vivo hasta la puerta. Garantía de frescura.</p></div>
+  </div>
+</section>
+
+<!-- ══════════ MUNDO ══════════ -->
+<section class="border-t border-ink/5 py-14 text-center px-4">
+  <h2 class="display text-4xl md:text-5xl">Desde Reñaca <span class="text-gold">para el mundo.</span></h2>
+  <p class="max-w-lg mx-auto text-sm opacity-70 mt-3">¿Familia o clientes fuera de Chile? Compra con PayPal en dólares y nosotros entregamos hoy mismo en la Región de Valparaíso, con tarjeta dedicatoria incluida.</p>
+  <button onclick="startFunnel('fecha')" class="btn-gold micro px-8 py-4 rounded-full mt-6">Enviar flores hoy</button>
+</section>
+
+<footer class="bg-ink text-ivory/60 py-8">
+  <div class="max-w-6xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-4 micro">
+    <span class="display text-xl text-ivory not-italic italic">Soho Flowers</span>
+    <span>Viña del Mar · Región de Valparaíso</span>
+    <a id="wa-footer" href="#" class="text-gold">WhatsApp directo</a>
+  </div>
+</footer>
+
+<!-- BOTÓN FLOTANTE WHATSAPP (red de seguridad para el apurado) -->
+<a id="wa-float" href="#" target="_blank" class="fixed bottom-5 right-5 z-40 bg-ink text-ivory micro px-5 py-3 rounded-full shadow-xl hover:bg-gold hover:text-ink transition">¿Sin tiempo? WhatsApp</a>
+
+<!-- ══════════ CHECKOUT RÁPIDO (3 pasos) ══════════ -->
+<div id="checkout-overlay" class="fixed inset-0 z-50 hidden">
+  <div class="absolute inset-0 bg-ink/60 backdrop-blur-sm" onclick="closeCheckout()"></div>
+  <div class="absolute inset-x-0 bottom-0 md:inset-0 md:flex md:items-center md:justify-center pointer-events-none">
+    <div class="pointer-events-auto bg-ivory w-full md:max-w-2xl md:rounded-3xl rounded-t-3xl max-h-[92vh] overflow-y-auto shadow-2xl">
+      <div class="sticky top-0 bg-ivory/95 backdrop-blur px-6 pt-5 pb-3 border-b border-ink/5 z-10">
+        <div class="flex items-center justify-between">
+          <h3 class="display text-3xl">Tu pedido</h3>
+          <button onclick="closeCheckout()" class="micro opacity-50 hover:opacity-100">Cerrar ✕</button>
+        </div>
+        <div class="flex gap-2 mt-3 micro text-gold">
+          <span id="prog-1" class="chip on px-3 py-1 rounded-full">1 Entrega</span>
+          <span id="prog-2" class="chip px-3 py-1 rounded-full">2 Datos</span>
+          <span id="prog-3" class="chip px-3 py-1 rounded-full">3 Pago</span>
+        </div>
+      </div>
+
+      <!-- PASO 1: ENTREGA -->
+      <div id="step-1" class="p-6 space-y-5">
+        <div id="cart-summary" class="text-sm"></div>
+        <div>
+          <p class="micro mb-2">Modalidad</p>
+          <div class="flex gap-2">
+            <button onclick="setLogistics('envio')" id="mod-envio" class="chip on flex-1 py-3 micro rounded-full">Envío a domicilio</button>
+            <button onclick="setLogistics('retiro')" id="mod-retiro" class="chip flex-1 py-3 micro rounded-full">Retiro en atelier</button>
+          </div>
+        </div>
+        <div id="zone-block">
+          <p class="micro mb-2">Zona de entrega</p>
+          <div id="zone-chips" class="flex flex-wrap gap-2"></div>
+          <p id="zone-detail" class="text-[10px] opacity-50 mt-2"></p>
+          <textarea id="address" rows="2" placeholder="Dirección completa (calle, número, depto, referencia)" class="w-full mt-3 border border-ink/15 rounded-xl p-3 text-sm bg-white"></textarea>
+        </div>
+        <div>
+          <p class="micro mb-2">Fecha</p>
+          <div class="flex gap-2 flex-wrap">
+            <button onclick="setDate('hoy')" id="date-hoy" class="chip px-5 py-3 micro rounded-full">Hoy</button>
+            <button onclick="setDate('manana')" id="date-manana" class="chip px-5 py-3 micro rounded-full">Mañana</button>
+            <input type="date" id="date-input" onchange="setDate(this.value)" class="chip px-4 py-2 micro rounded-full bg-white">
+          </div>
+        </div>
+        <div>
+          <p class="micro mb-2">Bloque horario</p>
+          <div id="time-chips" class="flex flex-wrap gap-2"></div>
+        </div>
+        <button onclick="goStep(2)" class="btn-gold w-full py-4 micro rounded-full">Continuar →</button>
+      </div>
+
+      <!-- PASO 2: DATOS -->
+      <div id="step-2" class="p-6 space-y-4 hidden">
+        <input id="buyer-email" type="email" placeholder="Tu correo (para la confirmación)" class="w-full border border-ink/15 rounded-xl p-3 text-sm bg-white">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <input id="sender-name" placeholder="Quién envía" class="border border-ink/15 rounded-xl p-3 text-sm bg-white">
+          <input id="receiver-name" placeholder="Quién recibe" class="border border-ink/15 rounded-xl p-3 text-sm bg-white">
+        </div>
+        <input id="receiver-phone" placeholder="Teléfono de quien recibe (opcional)" class="w-full border border-ink/15 rounded-xl p-3 text-sm bg-white">
+        <label class="flex items-center gap-2 text-xs opacity-70"><input id="envio-anonimo" type="checkbox" class="accent-[#C5A059]"> Entrega anónima ("Alguien que te quiere")</label>
+        <div>
+          <p class="micro mb-2">Tarjeta dedicatoria (opcional)</p>
+          <div class="flex gap-2 mb-2 flex-wrap">
+            <button onclick="writeMsg('condolencias')" class="chip px-3 py-1 micro rounded-full">Homenaje</button>
+            <button onclick="writeMsg('romance')" class="chip px-3 py-1 micro rounded-full">Romance</button>
+            <button onclick="writeMsg('cumpleanos')" class="chip px-3 py-1 micro rounded-full">Cumpleaños</button>
+          </div>
+          <textarea id="card-message" rows="3" placeholder="Escribe tu mensaje o usa una inspiración…" class="w-full border border-ink/15 rounded-xl p-3 text-sm bg-white"></textarea>
+        </div>
+        <div class="flex gap-2">
+          <button onclick="goStep(1)" class="btn-line flex-1 py-4 micro rounded-full">← Volver</button>
+          <button onclick="goStep(3)" class="btn-gold flex-1 py-4 micro rounded-full">Continuar →</button>
+        </div>
+      </div>
+
+      <!-- PASO 3: PAGO -->
+      <div id="step-3" class="p-6 space-y-4 hidden">
+        <div id="total-breakdown" class="border border-ink/10 rounded-2xl p-4 text-sm space-y-1 bg-white"></div>
+        <p class="micro opacity-50 text-center">Transacción protegida por encriptación bancaria</p>
+        <button onclick="payMercadoPago()" class="btn-gold w-full py-4 micro rounded-full">Pagar con Mercado Pago · 12 cuotas sin interés</button>
+        <div id="paypal-container"></div>
+        <button onclick="payPayPal()" class="btn-line w-full py-4 micro rounded-full">Pagar con PayPal · desde cualquier país (USD)</button>
+        <button onclick="goStep(2)" class="w-full py-2 micro opacity-50 hover:opacity-100">← Volver</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
