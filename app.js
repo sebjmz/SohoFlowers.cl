@@ -878,9 +878,8 @@ document.addEventListener("click", function(e){
   }
 }, true);
 
-/* ═══ INIT (a prueba de páginas sin catálogo: gracias, seguimiento, etc.) ═══ */
+/* ═══ INIT ═══ */
 document.addEventListener("DOMContentLoaded", () => {
-   // Auto-guardado inmediato en cada pulsación o cambio dentro del checkout
   const chkOverlay = $("checkout-overlay");
   if (chkOverlay) {
     chkOverlay.addEventListener("input", guardarProgreso);
@@ -892,8 +891,14 @@ document.addEventListener("DOMContentLoaded", () => {
   if ($("date-input")) $("date-input").min = mananaStr();
   if ($("time-chips") && S.date) setDate(S.date);
   if ($("mod-retiro") && S.logistics === "retiro") setLogistics("retiro");
-  updateCountdown(); setInterval(updateCountdown, 1000);
+  updateCountdown(); 
+  setInterval(updateCountdown, 1000);
   restaurarProgreso();
 });
 
-window.addEventListener("pageshow", e => { if (e.persisted){ restaurarProgreso(); updateCartUI(); } });
+window.addEventListener("pageshow", e => { 
+  if (e.persisted) { 
+    restaurarProgreso(); 
+    updateCartUI(); 
+  } 
+});
