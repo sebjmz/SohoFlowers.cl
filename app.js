@@ -592,3 +592,5 @@ document.addEventListener("DOMContentLoaded", () => {
   updateCountdown(); setInterval(updateCountdown, 1000);
   restaurarProgreso();
 });
+
+window.addEventListener("pageshow", e => { if (e.persisted){ restaurarProgreso(); updateCartUI(); } });
