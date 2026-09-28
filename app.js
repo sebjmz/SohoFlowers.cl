@@ -647,7 +647,7 @@ function orderPayload(){
       palette: "Predeterminada del Diseño",
       logistics_detail: logistics,
       time_slot: S.time || "No especificado",
-      destination_phone: $("receiver-phone")?.value || "",
+      destination_phone: ($("receiver-phone")?.value || "") + ($("buyer-whatsapp")?.value ? " / Comprador: " + $("buyer-whatsapp").value : ""),
       card_text: $("card-message")?.value || "",
       card_format: "Física",
       total_price: t.total,
