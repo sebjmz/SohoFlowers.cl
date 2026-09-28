@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Seguimiento | Soho Flowers</title>
-<meta name="description" content="Revisa el camino de tu pedido Soho Flowers en tiempo real: preparación, despacho y entrega con evidencia fotográfica.">
+<title>Pedido Confirmado | Soho Flowers</title>
+<meta name="description" content="Tu pedido Soho Flowers fue confirmado. Revisa tu correo, sigue tu arreglo en vivo y coordina detalles por WhatsApp.">
 <meta name="robots" content="noindex">
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -22,15 +22,11 @@ tailwind.config = { theme: { extend: {
   .btn-gold:hover{background:#0E1512;color:#C5A059}
   .btn-line{border:1px solid rgba(14,21,18,.25);transition:.25s}
   .btn-line:hover{border-color:#C5A059;color:#C5A059}
-  .state-chip{border:1px solid rgba(14,21,18,.15);opacity:.5}
-  .state-chip.done{background:#C5A059;color:#0E1512;border-color:transparent;opacity:1}
-  .state-chip.current{border-color:#C5A059;color:#8F6B2E;opacity:1}
   .fade-up{opacity:0;transform:translateY(14px);animation:fu .7s cubic-bezier(.16,1,.3,1) forwards}
   @keyframes fu{to{opacity:1;transform:none}}
-  input{outline:none}
-  input:focus{border-color:#C5A059!important}
-  .star{transition:.2s;cursor:pointer}
-  .star.on{color:#C5A059;opacity:1;transform:scale(1.1)}
+  @keyframes dash{to{stroke-dashoffset:0}}
+  .check-circle{stroke-dasharray:151;stroke-dashoffset:151;animation:dash .9s ease forwards}
+  .check-mark{stroke-dasharray:40;stroke-dashoffset:40;animation:dash .5s .8s ease forwards}
 </style>
 </head>
 <body class="bg-ivory text-ink font-sans antialiased min-h-screen flex flex-col">
@@ -40,98 +36,63 @@ tailwind.config = { theme: { extend: {
   <a href="/" class="flex items-center" aria-label="Soho Flowers - Ir al inicio">
     <img src="img/soho-flowers-logo-negro-fondo-transparente.webp" alt="Soho Flowers" class="h-8 md:h-10 mix-blend-multiply">
   </a>
-  <a href="/" class="micro opacity-60 hover:opacity-100">← Volver a la tienda</a>
+  <a href="/seguimiento.html" class="micro opacity-60 hover:opacity-100">Seguir mi pedido</a>
 </header>
 
-<!-- ══════════ BUSCADOR ══════════ -->
-<main class="flex-1 w-full max-w-2xl mx-auto px-4 py-10 md:py-14">
-  <h1 class="display text-5xl md:text-6xl text-center fade-up">Tu pedido viaja seguro.</h1>
-  <p class="text-center text-sm opacity-60 mt-3 max-w-md mx-auto fade-up" style="animation-delay:.1s">
-    Ingresa el código de tu pedido para revisar su camino en tiempo real. Lo encuentras en el comprobante que te enviamos.
+<!-- ══════════ CONFIRMACIÓN ══════════ -->
+<main class="flex-1 w-full max-w-2xl mx-auto px-4 py-12 md:py-16 text-center">
+
+  <!-- Check animado -->
+  <div class="mx-auto w-16 h-16 rounded-full border border-gold/40 flex items-center justify-center fade-up">
+    <svg viewBox="0 0 52 52" class="w-9 h-9" aria-hidden="true">
+      <circle cx="26" cy="26" r="24" fill="none" stroke="#C5A059" stroke-width="2" class="check-circle"/>
+      <path fill="none" stroke="#C5A059" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" d="M14 27l8 8 16-16" class="check-mark"/>
+    </svg>
+  </div>
+
+  <p class="micro text-goldink mt-6 fade-up" style="animation-delay:.1s">Pago acreditado</p>
+  <h1 class="display text-5xl md:text-6xl mt-2 fade-up" style="animation-delay:.15s">Orden Confirmada.</h1>
+  <p class="text-sm opacity-70 mt-4 max-w-md mx-auto fade-up" style="animation-delay:.2s">
+    Su transacción ha sido procesada con éxito. El pedido ya ingresó a nuestro sistema para su preparación.
   </p>
 
-  <div class="mt-8 flex gap-2 fade-up" style="animation-delay:.2s">
-    <input id="code-input" placeholder="Pedido SF-…" class="flex-1 border border-ink/15 rounded-full px-6 py-4 text-sm bg-white" onkeydown="if(event.key==='Enter')buscar()">
-    <button onclick="buscar()" class="btn-gold micro px-7 py-4 rounded-full whitespace-nowrap">Buscar pedido</button>
-  </div>
-  <p id="search-loading" class="micro text-center mt-4 text-goldink opacity-0">Buscando tu pedido…</p>
-
-  <!-- ══════════ ESTADO: ERROR ══════════ -->
-  <div id="error-box" class="hidden mt-8 border border-ink/10 rounded-2xl bg-white p-8 text-center">
-    <p class="display text-3xl">No dimos con este pedido.</p>
-    <p class="text-xs opacity-60 mt-2">Revisa bien el enlace o el código ingresado. Si tu pago fue hace menos de 1 minuto, intenta nuevamente.</p>
-    <div class="flex flex-col md:flex-row justify-center gap-3 mt-5">
-      <a href="/" class="btn-line micro px-6 py-3 rounded-full">Volver a la tienda</a>
-      <button onclick="resetView()" class="btn-line micro px-6 py-3 rounded-full">Revisar otro pedido 🔍</button>
-    </div>
+  <!-- CÓDIGO DE PEDIDO (estilo "Generando ID…") -->
+  <div class="mt-8 inline-block border border-ink/10 rounded-2xl bg-white px-10 py-6 fade-up" style="animation-delay:.3s">
+    <p class="micro opacity-50">Código de pedido</p>
+    <p id="order-code" class="display text-4xl md:text-5xl text-goldink mt-1">Generando ID…</p>
+    <p id="pay-method" class="micro opacity-40 mt-3"></p>
   </div>
 
-  <!-- ══════════ TIMELINE ══════════ -->
-  <div id="timeline" class="hidden mt-10">
-    <!-- Meta del pedido -->
-    <div class="border border-ink/10 rounded-2xl bg-white px-6 py-5 flex flex-wrap items-center justify-between gap-4">
-      <div><p class="micro opacity-50">Código</p><p id="t-code" class="display text-2xl text-goldink"></p></div>
-      <div><p class="micro opacity-50">Entrega</p><p id="t-slot" class="text-sm font-bold"></p></div>
-      <div><p class="micro opacity-50">Recibe</p><p id="t-receiver" class="text-sm font-bold"></p></div>
+  <!-- PASOS NUMERADOS (modelo La Foresta, adaptado a Soho) -->
+  <div class="mt-10 grid grid-cols-1 md:grid-cols-3 gap-6 text-left fade-up" style="animation-delay:.4s">
+    <div class="border border-ink/10 rounded-2xl bg-white p-5">
+      <p class="display text-3xl text-goldink">01.</p>
+      <p class="micro mt-1">Correo · Comprobante</p>
+      <p class="text-xs opacity-60 mt-2">El detalle de compra fue enviado a su email con la tarjeta y las coordenadas de entrega. (Revise Spam)</p>
     </div>
+    <div class="border border-ink/10 rounded-2xl bg-white p-5">
+      <p class="display text-3xl text-goldink">02.</p>
+      <p class="micro mt-1">Taller · Evidencia</p>
+      <p class="text-xs opacity-60 mt-2">Preparamos su arreglo y le enviamos la fotografía del ramo antes de que salga a reparto.</p>
+    </div>
+    <div class="border border-ink/10 rounded-2xl bg-white p-5">
+      <p class="display text-3xl text-goldink">03.</p>
+      <p class="micro mt-1">Logística · Ejecución</p>
+      <p class="text-xs opacity-60 mt-2">Despacho o retiro programado según las coordenadas indicadas, con seguimiento en vivo hasta la puerta.</p>
+    </div>
+  </div>
 
-    <!-- Paso 1 -->
-    <div class="flex gap-4 mt-8">
-      <div class="flex flex-col items-center">
-        <div id="dot-1" class="w-10 h-10 rounded-full border border-ink/15 opacity-40 flex items-center justify-center text-sm font-bold">1</div>
-        <div id="line-1" class="w-px flex-1 bg-ink/10"></div>
-      </div>
-      <div class="pb-10 flex-1">
-        <div class="flex items-center gap-3 flex-wrap">
-          <h3 class="display text-2xl md:text-3xl">Manos a la obra en el taller</h3>
-          <span id="chip-1" class="state-chip micro px-3 py-1 rounded-full">Pendiente</span>
-        </div>
-        <p class="text-xs opacity-60 mt-2 max-w-md">Recibimos tu pedido y agendamos tu lugar. Estamos eligiendo las mejores flores para armar un diseño impecable en la fecha y hora que pediste. Está en las mejores manos.</p>
-      </div>
-    </div>
+  <!-- ACCIONES -->
+  <div class="mt-10 flex flex-col md:flex-row gap-3 justify-center fade-up" style="animation-delay:.5s">
+    <a id="track-link" href="/seguimiento.html" class="btn-gold micro px-8 py-4 rounded-full">Seguir mi pedido en vivo</a>
+    <a href="/" class="btn-line micro px-8 py-4 rounded-full">Volver al inicio</a>
+    <a id="wa-link" href="#" target="_blank" class="btn-line micro px-8 py-4 rounded-full">Soporte WhatsApp</a>
+  </div>
 
-    <!-- Paso 2 -->
-    <div class="flex gap-4">
-      <div class="flex flex-col items-center">
-        <div id="dot-2" class="w-10 h-10 rounded-full border border-ink/15 opacity-40 flex items-center justify-center text-sm font-bold">2</div>
-        <div id="line-2" class="w-px flex-1 bg-ink/10"></div>
-      </div>
-      <div class="pb-10 flex-1">
-        <div class="flex items-center gap-3 flex-wrap">
-          <h3 class="display text-2xl md:text-3xl">Flores en camino 🚚</h3>
-          <span id="chip-2" class="state-chip micro px-3 py-1 rounded-full">Pendiente</span>
-        </div>
-        <p class="text-xs opacity-60 mt-2 max-w-md">¡Salió el despacho! Tu arreglo va rumbo a destino. Estamos a un paso de sacar esa sonrisa.</p>
-      </div>
-    </div>
-
-    <!-- Paso 3 -->
-    <div class="flex gap-4">
-      <div class="flex flex-col items-center">
-        <div id="dot-3" class="w-10 h-10 rounded-full border border-ink/15 opacity-40 flex items-center justify-center text-sm font-bold">3</div>
-      </div>
-      <div class="flex-1">
-        <div class="flex items-center gap-3 flex-wrap">
-          <h3 class="display text-2xl md:text-3xl">¡Entregado con éxito! 🌸</h3>
-          <span id="chip-3" class="state-chip micro px-3 py-1 rounded-full">Pendiente</span>
-        </div>
-        <p class="text-xs opacity-60 mt-2 max-w-md">Llegamos a destino y tu encargo ya está en manos de quien corresponde. Un nuevo momento especial compartido. Gracias por confiar en nosotros.</p>
-      </div>
-    </div>
-
-    <!-- Evidencia fotográfica -->
-    <div id="photo-box" class="hidden mt-8 rounded-2xl overflow-hidden border border-ink/10 bg-white">
-      <p id="photo-caption" class="micro px-5 pt-4 text-goldink">Evidencia fotográfica</p>
-      <img id="photo-img" class="w-full max-h-[420px] object-cover mt-2" alt="Evidencia de tu arreglo Soho Flowers">
-    </div>
-    <p id="photo-note" class="hidden micro text-center mt-6 opacity-50">La foto de tu arreglo aparecerá aquí antes de salir a reparto.</p>
-
-    <!-- Acciones -->
-    <div class="flex flex-col md:flex-row gap-3 justify-center mt-10">
-      <a href="/" class="btn-line micro px-6 py-4 rounded-full">← Volver a la tienda</a>
-      <button onclick="resetView()" class="btn-line micro px-6 py-4 rounded-full">Revisar otro pedido 🔍</button>
-      <button id="review-btn" onclick="openReview()" class="btn-gold micro px-6 py-4 rounded-full hidden">Dejar mi opinión ★</button>
-    </div>
+  <!-- SELLO DE CONFIANZA -->
+  <div class="mt-12 fade-up" style="animation-delay:.6s">
+    <p class="text-2xl text-gold tracking-[.3em]">★★★★★</p>
+    <p class="micro opacity-50 mt-2">Respaldado por nuestro compromiso de excelencia floral</p>
   </div>
 </main>
 
@@ -143,167 +104,40 @@ tailwind.config = { theme: { extend: {
   </div>
 </footer>
 
-<!-- ══════════ MODAL RESEÑA (con regalo final) ══════════ -->
-<div id="review-modal" class="fixed inset-0 z-50 hidden">
-  <div class="absolute inset-0 bg-ink/60 backdrop-blur-sm" onclick="closeReview()"></div>
-  <div class="absolute inset-x-4 top-1/2 -translate-y-1/2 md:inset-auto md:left-1/2 md:-translate-x-1/2 md:w-full md:max-w-md bg-ivory rounded-3xl p-8 shadow-2xl text-center">
-    <button onclick="closeReview()" class="absolute top-4 right-5 micro opacity-50 hover:opacity-100">✕</button>
-    <div id="review-form">
-      <p class="text-3xl">✨</p>
-      <h3 class="display text-3xl mt-2">¡Gracias por confiar en nosotros!</h3>
-      <p class="text-xs opacity-60 mt-3">Nos importa mucho tu experiencia. ¿Nos cuentas en unos segundos cómo estuvo todo? Tu tiempo es muy valioso, así que te dejaremos un pequeño regalo al final.</p>
-      <div class="flex justify-center gap-2 mt-6 text-3xl opacity-30" id="stars-row">
-        <span class="star" onclick="setRating(1)">★</span>
-        <span class="star" onclick="setRating(2)">★</span>
-        <span class="star" onclick="setRating(3)">★</span>
-        <span class="star" onclick="setRating(4)">★</span>
-        <span class="star" onclick="setRating(5)">★</span>
-      </div>
-      <button onclick="sendReview()" class="btn-gold micro px-8 py-4 rounded-full mt-6 w-full">Enviar mi opinión</button>
-    </div>
-    <div id="review-success" class="hidden">
-      <p class="text-3xl">🌸</p>
-      <h3 class="display text-3xl mt-2">¡Gracias por tu opinión!</h3>
-      <p class="text-xs opacity-60 mt-3">Tu regalo por tomarte el tiempo:</p>
-      <p class="display text-4xl text-goldink mt-2">SOHO10</p>
-      <p class="micro opacity-50 mt-1">10% de descuento en tu próximo pedido</p>
-      <a id="google-review-link" href="https://www.google.com/search?q=Soho+Flowers+Vi%C3%B1a+del+Mar+rese%C3%B1as" target="_blank" rel="noopener" class="btn-line micro px-6 py-3 rounded-full inline-block mt-5">Publicar también en Google</a>
-    </div>
-  </div>
-</div>
-
+<script src="app.js"></script>
 <script>
-/* ═══ CONFIG + TRACKER 4D (independiente de app.js) ═══ */
-const API = "https://api.sohoflowers.cl";
-const sid = sessionStorage.getItem("soho_sid") || ("sid_" + Date.now() + "_" + Math.floor(Math.random()*1e5));
-sessionStorage.setItem("soho_sid", sid);
-function track(name, data={}){
-  fetch(API + "/api/track", { method:"POST", headers:{"Content-Type":"application/json"}, keepalive:true,
-    body: JSON.stringify({ session_id:sid, event_name:name, event_data:data, url:location.pathname }) }).catch(()=>{});
-}
-track("page_view");
+  /* ── Código de pedido: URL → localStorage → fallback ── */
+  const params = new URLSearchParams(location.search);
+  const code = params.get("code")
+    || localStorage.getItem("soho_last_order")
+    || localStorage.getItem("soho_draft_code")
+    || "";
 
-const $ = id => document.getElementById(id);
-const ORDER = ["recibido","transito","entregado"];
-const LABELS = ["En taller","En camino","Entregado"];
-let currentOrder = null;
-let rating = 0;
+  setTimeout(() => {
+    document.getElementById("order-code").innerText = code || ("SF-" + Date.now().toString().slice(-8));
+  }, 900);
 
-/* ═══ BÚSQUEDA ═══ */
-async function buscar(){
-  const code = ($("code-input").value || "").trim();
-  if (!code) return;
-  $("search-loading").classList.remove("opacity-0");
-  $("error-box").classList.add("hidden");
-  $("timeline").classList.add("hidden");
-  try {
-    let r = await fetch(`${API}/api/order?code=${encodeURIComponent(code)}`);
-    if (!r.ok) r = await fetch(`${API}/api/tracking?id=${encodeURIComponent(code)}`);
-    if (!r.ok) throw 0;
-    const raw = await r.json();
-    currentOrder = normalizeOrder(raw, code);
-    renderOrder(currentOrder);
-    track("tracking_viewed", { code: currentOrder.code, status: currentOrder.status });
-  } catch(e){
-    $("error-box").classList.remove("hidden");
-    track("tracking_not_found", { code });
-  } finally {
-    $("search-loading").classList.add("opacity-0");
-  }
-}
+  /* ── Detección de pasarela acreditada ── */
+  const pm = document.getElementById("pay-method");
+  if (params.get("payment_id"))            pm.innerText = "Acreditado vía PayPal · Orden internacional";
+  else if (params.get("payment_status"))   pm.innerText = "Acreditado vía Webpay · " + params.get("payment_status");
+  else                                     pm.innerText = "Acreditado vía pasarela segura";
 
-function normalizeOrder(o, fallbackCode){
-  let status = o.status || "recibido";
-  if (status === "confirmado" || status === "pendiente") status = "recibido";
-  const photoConfirm = o.photos?.confirm || o.transito_img || "";
-  const photoEntrega = o.photos?.entrega || o.entregado_img || "";
-  return {
-    code: o.code || o.id || fallbackCode,
-    date: o.date || o.fecha_entrega || "—",
-    slot: o.slot || o.horario_entrega || "Por coordinar",
-    receiver: o.receiver || o.receptor || "—",
-    status,
-    photos: { confirm: photoConfirm, entrega: photoEntrega }
-  };
-}
-
-function photoSrc(src){
-  if (!src) return "";
-  if (/^(data:|https?:|blob:)/i.test(src)) return src;
-  return API + (src.startsWith("/") ? src : "/" + src);
-}
-function resetView(){
-  currentOrder = null;
-  $("timeline").classList.add("hidden");
-  $("error-box").classList.add("hidden");
-  $("code-input").value = "";
-  $("code-input").focus();
-}
-
-/* ═══ RENDER DEL TIMELINE ═══ */
-function renderOrder(o){
-  $("timeline").classList.remove("hidden");
-  $("t-code").innerText = o.code;
-  $("t-slot").innerText = `${o.date} · ${o.slot || "Por coordinar"}`;
-  $("t-receiver").innerText = o.receiver || "—";
-  const idx = ORDER.indexOf(o.status);
-
-  [1,2,3].forEach(i => {
-    const pos = i - 1;
-    const dot = $("dot-"+i), chip = $("chip-"+i), line = $("line-"+i);
-    const done = pos < idx, current = pos === idx;
-    dot.className = "w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold " +
-      (done ? "bg-gold text-ink border border-gold" : current ? "border border-gold text-goldink" : "border border-ink/15 opacity-40");
-    dot.innerText = done ? "✓" : i;
-    chip.innerText = done ? "Completado" : current ? LABELS[pos] : "Pendiente";
-    chip.className = "state-chip micro px-3 py-1 rounded-full " + (done ? "done" : current ? "current" : "");
-    if (line) line.className = "w-px flex-1 " + (done ? "bg-gold" : "bg-ink/10");
-  });
-
-  /* Evidencia fotográfica */
-  const stage = (o.status === "entregado" && o.photos && o.photos.entrega) ? "entrega"
-              : (o.photos && o.photos.confirm) ? "confirm" : null;
-  if (stage){
-    $("photo-box").classList.remove("hidden");
-    $("photo-note").classList.add("hidden");
-    $("photo-img").src = photoSrc(o.photos[stage]);
-    $("photo-caption").innerText = stage === "entrega" ? "Entrega comprobada" : "Tu arreglo antes de salir a reparto";
+  /* ── Links con contexto del pedido ── */
+  const waBase = "https://wa.me/56951134778?text=";
+  if (code){
+    try { localStorage.setItem("soho_last_order", code); } catch(e) {}
+    document.getElementById("track-link").href = "/seguimiento.html?code=" + encodeURIComponent(code);
+    document.getElementById("wa-link").href = waBase + encodeURIComponent("Hola, acabo de comprar el pedido " + code + " y quería coordinar un detalle:");
   } else {
-    $("photo-box").classList.add("hidden");
-    $("photo-note").classList.toggle("hidden", o.status === "entregado");
+    document.getElementById("wa-link").href = waBase + encodeURIComponent("Hola, acabo de hacer una compra y necesito soporte:");
   }
 
-  /* Botón de reseña solo al entregar */
-  $("review-btn").classList.toggle("hidden", o.status !== "entregado");
-}
-
-/* ═══ MODAL DE RESEÑA ═══ */
-function openReview(){ $("review-modal").classList.remove("hidden"); track("review_modal_opened", { code: currentOrder?.code }); }
-function closeReview(){ $("review-modal").classList.add("hidden"); }
-function setRating(n){
-  rating = n;
-  document.querySelectorAll("#stars-row .star").forEach((s,i) => s.classList.toggle("on", i < n));
-}
-async function sendReview(){
-  if (!rating) return alert("Elige una calificación de 1 a 5 estrellas.");
-  const orderId = currentOrder?.code || "";
-  track("review_sent", { rating, order_code: orderId });
-  try {
-    await fetch(API + "/api/public/survey/submit", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ order_id: orderId, rating, issues: [], suggestion: "" })
-    });
-  } catch(e) {}
-  $("review-form").classList.add("hidden");
-  $("review-success").classList.remove("hidden");
-}
-
-/* ═══ AUTO-BÚSQUEDA DESDE URL (correos, gracias.html, QR) ═══ */
-document.addEventListener("DOMContentLoaded", () => {
-  const code = new URLSearchParams(location.search).get("code");
-  if (code){ $("code-input").value = code; buscar(); }
-});
+  /* ── Limpieza post-compra (app.js ya registró el evento purchase al cargar) ── */
+  localStorage.removeItem("soho_cart");
+  localStorage.removeItem("soho_draft_code");
+  localStorage.removeItem("soho_checkout_inputs");
+  if (typeof updateCartUI === "function") updateCartUI();
 </script>
 </body>
 </html>
