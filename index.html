@@ -21,7 +21,7 @@ tailwind.config = { theme: { extend: {
 }}};
 </script>
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"Florist","name":"Soho Flowers","url":"https://sohoflowers.cl","telephone":"+56994783520","areaServed":["Viña del Mar","Reñaca","Concón","Valparaíso","Quilpué"],"paymentAccepted":"Webpay, PayPal, Débito, Crédito","priceRange":"$21.990 - $230.900"}
+{"@context":"https://schema.org","@type":"Florist","name":"Soho Flowers","url":"https://sohoflowers.cl","telephone":"+56951134778","areaServed":["Viña del Mar","Reñaca","Concón","Valparaíso","Quilpué"],"paymentAccepted":"Webpay, PayPal, Débito, Crédito","priceRange":"$21.990 - $230.900"}
 </script>
 <style>
   html{scroll-behavior:smooth}
@@ -245,12 +245,13 @@ tailwind.config = { theme: { extend: {
 
       <!-- PASO 2: DATOS -->
       <div id="step-2" class="p-6 space-y-4 hidden">
-        <input id="buyer-email" type="email" placeholder="Tu correo (para la confirmación)" class="w-full border border-ink/15 rounded-xl p-3 text-sm bg-white" onblur="guardarProgreso()">
+        <input id="buyer-email" type="email" autocomplete="email" placeholder="Tu correo (para la confirmación)" class="w-full border border-ink/15 rounded-xl p-3 text-sm bg-white" onblur="guardarProgreso()">
+        <input id="buyer-whatsapp" type="tel" autocomplete="tel" inputmode="tel" placeholder="Tu WhatsApp / teléfono de contacto" class="w-full border border-ink/15 rounded-xl p-3 text-sm bg-white" onblur="guardarProgreso()">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <input id="sender-name" placeholder="Quién envía" class="border border-ink/15 rounded-xl p-3 text-sm bg-white" onblur="guardarProgreso()">
+          <input id="sender-name" autocomplete="name" placeholder="Quién envía" class="border border-ink/15 rounded-xl p-3 text-sm bg-white" onblur="guardarProgreso()">
           <input id="receiver-name" placeholder="Quién recibe" class="border border-ink/15 rounded-xl p-3 text-sm bg-white" onblur="guardarProgreso()">
         </div>
-        <input id="receiver-phone" placeholder="Teléfono de quien recibe (opcional)" class="w-full border border-ink/15 rounded-xl p-3 text-sm bg-white" onblur="guardarProgreso()">
+        <input id="receiver-phone" type="tel" inputmode="tel" placeholder="Teléfono de quien recibe (para coordinar la entrega)" class="w-full border border-ink/15 rounded-xl p-3 text-sm bg-white" onblur="guardarProgreso()">
         <label class="flex items-center gap-2 text-xs opacity-70"><input id="envio-anonimo" type="checkbox" class="accent-[#C5A059]" onchange="guardarProgreso()"> Entrega anónima ("Alguien que te quiere")</label>
         <div>
           <p class="micro mb-2">Tarjeta dedicatoria (opcional)</p>
@@ -300,6 +301,6 @@ tailwind.config = { theme: { extend: {
   </div>
 </div>
 
-<script src="app.js?v=1"></script>
+<script src="app.js?v=6"></script>
 </body>
 </html>
