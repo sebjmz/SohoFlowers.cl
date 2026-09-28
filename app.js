@@ -608,30 +608,71 @@ async function payFlow(){
 
 /* ═══ PAGO 2: PAYPAL (internacional) ═══ */
 let paypalLoaded = false;
+let paypalRendered = false;
+
 function payPayPal(){
   const email = $("buyer-email").value.trim();
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return alert("Necesitamos tu correo para la confirmación.");
+  
   window.trackEvent4D("payment_initiated", { method:"PayPal", cart_value: flowersSubtotal(), order_code: S.code });
+
+  const container = $("paypal-container");
+  if (!container) return;
+
+  // Si ya se dibujaron los botones, no volver a renderizar
+  if (paypalRendered && container.children.length > 0) {
+    container.scrollIntoView({ behavior: "smooth" });
+    return;
+  }
+
+  // Limpiar cualquier intento previo
+  container.innerHTML = "";
+
   const run = () => {
     paypal.Buttons({
-      style:{ color:"gold", shape:"rect", label:"pay", height:45 },
+      style: { color: "gold", shape: "rect", label: "pay", height: 45 },
       createOrder: async () => {
-        const r = await fetch(CONFIG.api.paypalCreate, { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(orderPayload()) });
-        const d = await r.json(); if (d.id) return d.id; throw Error("PayPal create");
+        const r = await fetch(CONFIG.api.paypalCreate, { 
+          method: "POST", 
+          headers: { "Content-Type": "application/json" }, 
+          body: JSON.stringify(orderPayload()) 
+        });
+        const d = await r.json(); 
+        if (d.id) return d.id; 
+        throw Error("PayPal create");
       },
       onApprove: async (data) => {
-        const r = await fetch(CONFIG.api.paypalCapture, { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ orderID:data.orderID, metadata: orderPayload().metadata }) });
+        const r = await fetch(CONFIG.api.paypalCapture, { 
+          method: "POST", 
+          headers: { "Content-Type": "application/json" }, 
+          body: JSON.stringify({ orderID: data.orderID, metadata: orderPayload().metadata }) 
+        });
         const d = await r.json();
-        if (d.status === "COMPLETED"){ localStorage.removeItem("soho_draft_code"); location.href = location.origin + "/gracias.html?payment_id=" + d.id + "&code=" + S.code; }
-        else alert("El pago no pudo completarse.");
+        if (d.status === "COMPLETED"){ 
+          localStorage.removeItem("soho_draft_code"); 
+          location.href = location.origin + "/gracias.html?payment_id=" + d.id + "&code=" + S.code; 
+        } else {
+          alert("El pago no pudo completarse.");
+        }
       },
       onError: () => alert("PayPal falló. Prueba con Webpay.")
     }).render("#paypal-container");
+
+    paypalRendered = true;
+
+    // Ocultar el botón original para evitar clics repetidos
+    const btnPaypalTrigger = document.querySelector("button[onclick='payPayPal()']");
+    if (btnPaypalTrigger) btnPaypalTrigger.style.display = "none";
   };
+
   if (paypalLoaded || typeof paypal !== "undefined") return run();
+
   const s = document.createElement("script");
   s.src = `https://www.paypal.com/sdk/js?client-id=${CONFIG.paypalClientId}&currency=USD`;
-  s.onload = () => { paypalLoaded = true; run(); };
+  s.onload = () => { 
+    paypalLoaded = true; 
+    run(); 
+  };
   document.body.appendChild(s);
 }
 
