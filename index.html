@@ -5,6 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Soho Flowers | Flores premium hoy, sin vueltas | Viña · Reñaca · Concón</title>
 <meta name="description" content="Arreglos de autor con entrega el mismo día y hora elegida. Hasta 12 cuotas sin interés con Webpay (débito y crédito nacional), PayPal desde cualquier parte del mundo, express con +50% solo sobre el envío. Sin recargos ocultos.">
+<meta property="og:title" content="Soho Flowers | Flores premium hoy, sin vueltas">
+<meta property="og:description" content="Arreglos de autor con entrega el mismo día en Viña, Reñaca y Concón. Hasta 12 cuotas sin interés con Webpay y PayPal internacional.">
+<meta property="og:image" content="https://sohoflowers.cl/img/hero-soho.webp">
+<meta property="og:url" content="https://sohoflowers.cl/">
+<meta name="theme-color" content="#0E1512">
+<link rel="icon" type="image/webp" href="img/soho-flowers-logo-negro-fondo-transparente.webp">
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500;1,600&family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -13,6 +19,9 @@ tailwind.config = { theme: { extend: {
   colors: { ink:'#0E1512', gold:'#C5A059', goldhero:'#A9803E', goldink:'#8F6B2E', ivory:'#FBFAF8', smoke:'#6E6E68' },
   fontFamily: { serif:['"Cormorant Garamond"','serif'], sans:['Manrope','system-ui','sans-serif'] }
 }}};
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"Florist","name":"Soho Flowers","url":"https://sohoflowers.cl","telephone":"+56994783520","areaServed":["Viña del Mar","Reñaca","Concón","Valparaíso","Quilpué"],"paymentAccepted":"Webpay, PayPal, Débito, Crédito","priceRange":"$36.900 - $230.900"}
 </script>
 <style>
   html{scroll-behavior:smooth}
@@ -45,7 +54,7 @@ tailwind.config = { theme: { extend: {
       <button onclick="openCheckout()" class="micro btn-line px-4 py-2 rounded-full">Mi pedido <span id="cart-count" class="text-goldink">0</span></button>
     </nav>
   </div>
-  <!-- BARRA DE PROMESAS -->
+  <!-- BARRA DE PROMESAS (siempre visible) -->
   <div class="bg-ink text-ivory/90">
     <div class="max-w-6xl mx-auto px-4 h-8 flex items-center gap-6 overflow-x-auto hide-scroll micro whitespace-nowrap">
       <span class="text-gold">Hasta 12 cuotas sin interés · Webpay (débito y crédito nacional)</span>
@@ -72,6 +81,7 @@ tailwind.config = { theme: { extend: {
       Eliges fecha y hora en 60 segundos. Pagas en cuotas o desde el extranjero.
       Nosotros nos encargamos del resto, con foto del arreglo antes de salir y seguimiento en vivo.
     </p>
+    <!-- BOTONES DE INTENCIÓN: el embudo parte AQUÍ -->
     <div class="mt-8 flex flex-col md:flex-row items-center justify-center gap-3 fade-up" style="animation-delay:.3s">
       <button onclick="startFunnel('hoy')" class="btn-gold micro px-8 py-4 rounded-full w-full md:w-auto">Lo necesito hoy →</button>
       <button onclick="startFunnel('fecha')" class="btn-line micro px-8 py-4 rounded-full w-full md:w-auto">Elegir fecha y hora</button>
@@ -87,7 +97,7 @@ tailwind.config = { theme: { extend: {
   </div>
 </section>
 
-<!-- ══════════ OCASIÓN (3 puertas) ══════════ -->
+<!-- ══════════ OCASIÓN (3 puertas, no 10) ══════════ -->
 <section id="ocasiones" class="max-w-6xl mx-auto px-4 pb-4">
   <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
     <button onclick="filterOccasion('homenajes')" data-occ="homenajes" class="occ-btn chip rounded-2xl p-6 text-left hover:border-gold">
@@ -108,7 +118,7 @@ tailwind.config = { theme: { extend: {
   </div>
 </section>
 
-<!-- ══════════ CATÁLOGO CORTO ══════════ -->
+<!-- ══════════ CATÁLOGO CORTO (decisión rápida) ══════════ -->
 <section id="coleccion" class="max-w-6xl mx-auto px-4 py-10">
   <div class="flex items-end justify-between mb-6">
     <h2 class="display text-4xl md:text-5xl" id="catalog-title">Colección completa</h2>
@@ -117,7 +127,7 @@ tailwind.config = { theme: { extend: {
   <div id="product-grid" class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6"></div>
 </section>
 
-<!-- ══════════ LA REGLA SOHO ══════════ -->
+<!-- ══════════ LA REGLA SOHO (transparencia = conversión) ══════════ -->
 <section class="bg-ink text-ivory py-16">
   <div class="max-w-6xl mx-auto px-4">
     <p class="micro text-gold text-center">Sin letras chicas</p>
@@ -146,6 +156,7 @@ tailwind.config = { theme: { extend: {
   <button onclick="startFunnel('fecha')" class="btn-gold micro px-8 py-4 rounded-full mt-6">Enviar flores hoy</button>
 </section>
 
+<!-- ══════════ FOOTER ══════════ -->
 <footer class="bg-ink text-ivory/60 py-8">
   <div class="max-w-6xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-4 micro">
     <img src="img/soho-flowers-logo-negro-fondo-transparente.webp" alt="Soho Flowers" class="h-9 brightness-0 invert opacity-90">
@@ -154,6 +165,7 @@ tailwind.config = { theme: { extend: {
   </div>
 </footer>
 
+<!-- BOTÓN FLOTANTE WHATSAPP (red de seguridad para el apurado) -->
 <a id="wa-float" href="#" target="_blank" class="fixed bottom-5 right-5 z-40 bg-ink text-ivory micro px-5 py-3 rounded-full shadow-xl hover:bg-gold hover:text-ink transition">¿Sin tiempo? WhatsApp</a>
 
 <!-- ══════════ CHECKOUT RÁPIDO (3 pasos) ══════════ -->
@@ -173,6 +185,7 @@ tailwind.config = { theme: { extend: {
         </div>
       </div>
 
+      <!-- PASO 1: ENTREGA -->
       <div id="step-1" class="p-6 space-y-5">
         <div id="cart-summary" class="text-sm"></div>
         <div>
@@ -186,31 +199,37 @@ tailwind.config = { theme: { extend: {
           <p class="micro mb-2">Zona de entrega</p>
           <div id="zone-chips" class="flex flex-wrap gap-2"></div>
           <p id="zone-detail" class="text-[10px] opacity-50 mt-2"></p>
-          <textarea id="address" rows="2" placeholder="Dirección completa (calle, número, depto, referencia)" class="w-full mt-3 border border-ink/15 rounded-xl p-3 text-sm bg-white"></textarea>
+          <textarea id="address" rows="2" placeholder="Dirección completa (calle, número, depto, referencia)" class="w-full mt-3 border border-ink/15 rounded-xl p-3 text-sm bg-white" onblur="guardarProgreso()"></textarea>
         </div>
         <div>
           <p class="micro mb-2">Fecha</p>
           <div class="flex gap-2 flex-wrap">
             <button onclick="setDate('hoy')" id="date-hoy" class="chip px-5 py-3 micro rounded-full">Hoy</button>
             <button onclick="setDate('manana')" id="date-manana" class="chip px-5 py-3 micro rounded-full">Mañana</button>
-            <input type="date" id="date-input" onchange="setDate(this.value)" class="chip px-4 py-2 micro rounded-full bg-white">
+            <button onclick="showCalendar()" class="chip px-5 py-3 micro rounded-full">Otro día →</button>
+            <input type="date" id="date-input" onchange="pickCalendarDay(this.value)" class="chip px-4 py-2 micro rounded-full bg-white">
           </div>
         </div>
         <div>
           <p class="micro mb-2">Bloque horario</p>
           <div id="time-chips" class="flex flex-wrap gap-2"></div>
         </div>
+        <div>
+          <p class="micro mb-2">Nota para el repartidor (opcional)</p>
+          <textarea id="delivery-note" rows="2" placeholder="Ej: depto 502, timbre azul, dejar en conserjería…" class="w-full border border-ink/15 rounded-xl p-3 text-sm bg-white" onblur="guardarProgreso()"></textarea>
+        </div>
         <button onclick="goStep(2)" class="btn-gold w-full py-4 micro rounded-full">Continuar →</button>
       </div>
 
+      <!-- PASO 2: DATOS -->
       <div id="step-2" class="p-6 space-y-4 hidden">
-        <input id="buyer-email" type="email" placeholder="Tu correo (para la confirmación)" class="w-full border border-ink/15 rounded-xl p-3 text-sm bg-white">
+        <input id="buyer-email" type="email" placeholder="Tu correo (para la confirmación)" class="w-full border border-ink/15 rounded-xl p-3 text-sm bg-white" onblur="guardarProgreso()">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <input id="sender-name" placeholder="Quién envía" class="border border-ink/15 rounded-xl p-3 text-sm bg-white">
-          <input id="receiver-name" placeholder="Quién recibe" class="border border-ink/15 rounded-xl p-3 text-sm bg-white">
+          <input id="sender-name" placeholder="Quién envía" class="border border-ink/15 rounded-xl p-3 text-sm bg-white" onblur="guardarProgreso()">
+          <input id="receiver-name" placeholder="Quién recibe" class="border border-ink/15 rounded-xl p-3 text-sm bg-white" onblur="guardarProgreso()">
         </div>
-        <input id="receiver-phone" placeholder="Teléfono de quien recibe (opcional)" class="w-full border border-ink/15 rounded-xl p-3 text-sm bg-white">
-        <label class="flex items-center gap-2 text-xs opacity-70"><input id="envio-anonimo" type="checkbox" class="accent-[#C5A059]"> Entrega anónima ("Alguien que te quiere")</label>
+        <input id="receiver-phone" placeholder="Teléfono de quien recibe (opcional)" class="w-full border border-ink/15 rounded-xl p-3 text-sm bg-white" onblur="guardarProgreso()">
+        <label class="flex items-center gap-2 text-xs opacity-70"><input id="envio-anonimo" type="checkbox" class="accent-[#C5A059]" onchange="guardarProgreso()"> Entrega anónima ("Alguien que te quiere")</label>
         <div>
           <p class="micro mb-2">Tarjeta dedicatoria (opcional)</p>
           <div class="flex gap-2 mb-2 flex-wrap">
@@ -218,7 +237,7 @@ tailwind.config = { theme: { extend: {
             <button onclick="writeMsg('romance')" class="chip px-3 py-1 micro rounded-full">Romance</button>
             <button onclick="writeMsg('cumpleanos')" class="chip px-3 py-1 micro rounded-full">Cumpleaños</button>
           </div>
-          <textarea id="card-message" rows="3" placeholder="Escribe tu mensaje o usa una inspiración…" class="w-full border border-ink/15 rounded-xl p-3 text-sm bg-white"></textarea>
+          <textarea id="card-message" rows="3" placeholder="Escribe tu mensaje o usa una inspiración…" class="w-full border border-ink/15 rounded-xl p-3 text-sm bg-white" onblur="guardarProgreso()"></textarea>
         </div>
         <div class="flex gap-2">
           <button onclick="goStep(1)" class="btn-line flex-1 py-4 micro rounded-full">← Volver</button>
@@ -226,6 +245,7 @@ tailwind.config = { theme: { extend: {
         </div>
       </div>
 
+      <!-- PASO 3: PAGO -->
       <div id="step-3" class="p-6 space-y-4 hidden">
         <div id="total-breakdown" class="border border-ink/10 rounded-2xl p-4 text-sm space-y-1 bg-white"></div>
         <p class="micro opacity-50 text-center">Transacción protegida por encriptación bancaria</p>
@@ -236,6 +256,24 @@ tailwind.config = { theme: { extend: {
         <button onclick="goStep(2)" class="w-full py-2 micro opacity-50 hover:opacity-100">← Volver</button>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- ══════════ CALENDARIO VISUAL (modal) ══════════ -->
+<div id="calendar-modal" class="fixed inset-0 z-[60] hidden opacity-0 transition-opacity duration-200">
+  <div class="absolute inset-0 bg-ink/60 backdrop-blur-sm" onclick="closeCalendar()"></div>
+  <div class="absolute inset-x-4 top-1/2 -translate-y-1/2 md:inset-auto md:left-1/2 md:-translate-x-1/2 md:w-full md:max-w-md bg-ivory rounded-3xl p-6 shadow-2xl">
+    <div class="flex items-center justify-between mb-4">
+      <button id="cal-prev" onclick="changeMonth(-1)" class="display text-3xl hover:text-goldink" aria-label="Mes anterior">‹</button>
+      <h3 id="cal-month-title" class="display text-3xl"></h3>
+      <button id="cal-next" onclick="changeMonth(1)" class="display text-3xl hover:text-goldink" aria-label="Mes siguiente">›</button>
+    </div>
+    <div class="grid grid-cols-7 gap-1 text-center micro opacity-50 mb-2">
+      <span>Do</span><span>Lu</span><span>Ma</span><span>Mi</span><span>Ju</span><span>Vi</span><span>Sá</span>
+    </div>
+    <div id="calendar-grid" class="grid grid-cols-7 gap-1 text-center"></div>
+    <p class="micro opacity-40 mt-3 text-center">Los días tachados tienen cupos agotados</p>
+    <button onclick="closeCalendar()" class="w-full mt-4 btn-line micro py-3 rounded-full">Cancelar</button>
   </div>
 </div>
 
