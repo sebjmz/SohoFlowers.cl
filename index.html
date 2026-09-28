@@ -21,7 +21,7 @@ tailwind.config = { theme: { extend: {
 }}};
 </script>
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"Florist","name":"Soho Flowers","url":"https://sohoflowers.cl","telephone":"+56994783520","areaServed":["Viña del Mar","Reñaca","Concón","Valparaíso","Quilpué"],"paymentAccepted":"Webpay, PayPal, Débito, Crédito","priceRange":"$36.900 - $230.900"}
+{"@context":"https://schema.org","@type":"Florist","name":"Soho Flowers","url":"https://sohoflowers.cl","telephone":"+56994783520","areaServed":["Viña del Mar","Reñaca","Concón","Valparaíso","Quilpué"],"paymentAccepted":"Webpay, PayPal, Débito, Crédito","priceRange":"$21.990 - $230.900"}
 </script>
 <style>
   html{scroll-behavior:smooth}
@@ -185,7 +185,7 @@ tailwind.config = { theme: { extend: {
     <button onclick="procederCheckout()" class="btn-gold w-full py-4 micro rounded-full">Proceder al Checkout →</button>
   </div>
 </aside>
-  
+
 <!-- ══════════ CHECKOUT RÁPIDO (3 pasos) ══════════ -->
 <div id="checkout-overlay" class="fixed inset-0 z-50 hidden">
   <div class="absolute inset-0 bg-ink/60 backdrop-blur-sm" onclick="closeCheckout()"></div>
@@ -212,6 +212,10 @@ tailwind.config = { theme: { extend: {
             <button onclick="setLogistics('envio')" id="mod-envio" class="chip on flex-1 py-3 micro rounded-full">Envío a domicilio</button>
             <button onclick="setLogistics('retiro')" id="mod-retiro" class="chip flex-1 py-3 micro rounded-full">Retiro en atelier</button>
           </div>
+        </div>
+        <div id="pickup-block" style="display:none">
+          <p class="micro mb-2">¿Quién pasará a retirar?</p>
+          <input id="pickup-name" placeholder="Nombre y apellido de quien retira" class="w-full border border-ink/15 rounded-xl p-3 text-sm bg-white" onblur="guardarProgreso()">
         </div>
         <div id="zone-block">
           <p class="micro mb-2">Zona de entrega</p>
@@ -254,6 +258,7 @@ tailwind.config = { theme: { extend: {
             <button onclick="writeMsg('condolencias')" class="chip px-3 py-1 micro rounded-full">Homenaje</button>
             <button onclick="writeMsg('romance')" class="chip px-3 py-1 micro rounded-full">Romance</button>
             <button onclick="writeMsg('cumpleanos')" class="chip px-3 py-1 micro rounded-full">Cumpleaños</button>
+            <button onclick="writeMsg('agradecimiento')" class="chip px-3 py-1 micro rounded-full">Agradecimiento</button>
           </div>
           <textarea id="card-message" rows="3" placeholder="Escribe tu mensaje o usa una inspiración…" class="w-full border border-ink/15 rounded-xl p-3 text-sm bg-white" onblur="guardarProgreso()"></textarea>
         </div>
