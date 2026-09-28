@@ -6,7 +6,7 @@
 
 const CONFIG = {
   brand: "Soho Flowers",
-  whatsapp: "56994783520",
+  whatsapp: "56951134778",
   api: {
     worker:        "https://api.sohoflowers.cl",
     flowCreate:    "https://api.sohoflowers.cl/flow/create",
@@ -24,8 +24,8 @@ const CONFIG = {
   zones: [
     { id:1, name:"Central",     price:3500,  detail:"Reñaca Centro, Los Almendros, Jardín del Mar, Los Pinos" },
     { id:2, name:"Local",       price:5000,  detail:"Reñaca Norte, Montemar, Higuerillas, Gómez Carreño, Glorias Navales" },
-    { id:3, name:"Intermedia",  price:7500,  detail:"Viña Centro y Cerros, Chorrillos, Concón Los Romeros, Costa de Montemar" },
-    { id:4, name:"Extendida",   price:10000, detail:"Mantagua, Valparaíso Plan y Cerros, Quilpué Centro" },
+    { id:3, name:"Intermedia",  price:7500,  detail:"Viña Centro y Cerros, Reñaca Alto, Concón Los Romeros, Costa de Montemar" },
+    { id:4, name:"Extendida",   price:10000, detail:"Mantagua, Chorrillos, Valparaíso Plan y Cerros, Quilpué Centro" },
     { id:5, name:"Extendida+",  price:15000, detail:"Quintero, Curauma, Placilla, El Belloto" }
   ]
 };
