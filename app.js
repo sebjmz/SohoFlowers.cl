@@ -485,7 +485,7 @@ function orderPayload(){
       fecha_entrega: fEntrega,
       valor_envio: t.ship - t.bonus,
       comprador_email: $("buyer-email")?.value || "",
-      buyer_whatsapp: $("buyer-whatsapp")?.value \vert{}\vert{} $("receiver-phone")?.value || "",
+      buyer_whatsapp: $("buyer-whatsapp")?.value || $("receiver-phone")?.value || "",
       express: S.express
     }
   };
