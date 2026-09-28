@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pedido Confirmado | Soho Flowers</title>
+<meta name="description" content="Tu pedido Soho Flowers fue confirmado. Revisa tu correo, sigue tu arreglo en vivo y coordina detalles por WhatsApp.">
+<meta name="robots" content="noindex">
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500;1,600&family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script>
+tailwind.config = { theme: { extend: {
+  colors: { ink:'#0E1512', gold:'#C5A059', goldhero:'#A9803E', goldink:'#8F6B2E', ivory:'#FBFAF8', smoke:'#6E6E68' },
+  fontFamily: { serif:['"Cormorant Garamond"','serif'], sans:['Manrope','system-ui','sans-serif'] }
+}}};
+</script>
+<style>
+  .display{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:500;letter-spacing:-.01em}
+  .micro{font-size:9px;letter-spacing:.22em;text-transform:uppercase;font-weight:700}
+  .btn-gold{background:#C5A059;color:#0E1512;transition:.25s}
+  .btn-gold:hover{background:#0E1512;color:#C5A059}
+  .btn-line{border:1px solid rgba(14,21,18,.25);transition:.25s}
+  .btn-line:hover{border-color:#C5A059;color:#C5A059}
+  .fade-up{opacity:0;transform:translateY(14px);animation:fu .7s cubic-bezier(.16,1,.3,1) forwards}
+  @keyframes fu{to{opacity:1;transform:none}}
+  @keyframes dash{to{stroke-dashoffset:0}}
+  .check-circle{stroke-dasharray:151;stroke-dashoffset:151;animation:dash .9s ease forwards}
+  .check-mark{stroke-dasharray:40;stroke-dashoffset:40;animation:dash .5s .8s ease forwards}
+</style>
+</head>
+<body class="bg-ivory text-ink font-sans antialiased min-h-screen flex flex-col">
+
+<!-- ══════════ HEADER ══════════ -->
+<header class="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between w-full">
+  <a href="/" class="flex items-center" aria-label="Soho Flowers - Ir al inicio">
+    <img src="img/soho-flowers-logo-negro-fondo-transparente.webp" alt="Soho Flowers" class="h-8 md:h-10 mix-blend-multiply">
+  </a>
+  <a href="/seguimiento.html" class="micro opacity-60 hover:opacity-100">Seguir mi pedido</a>
+</header>
+
+<!-- ══════════ CONFIRMACIÓN ══════════ -->
+<main class="flex-1 w-full max-w-2xl mx-auto px-4 py-12 md:py-16 text-center">
+
+  <!-- Check animado -->
+  <div class="mx-auto w-16 h-16 rounded-full border border-gold/40 flex items-center justify-center fade-up">
+    <svg viewBox="0 0 52 52" class="w-9 h-9" aria-hidden="true">
+      <circle cx="26" cy="26" r="24" fill="none" stroke="#C5A059" stroke-width="2" class="check-circle"/>
+      <path fill="none" stroke="#C5A059" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" d="M14 27l8 8 16-16" class="check-mark"/>
+    </svg>
+  </div>
+
+  <p class="micro text-goldink mt-6 fade-up" style="animation-delay:.1s">Pago acreditado</p>
+  <h1 class="display text-5xl md:text-6xl mt-2 fade-up" style="animation-delay:.15s">Orden Confirmada.</h1>
+  <p class="text-sm opacity-70 mt-4 max-w-md mx-auto fade-up" style="animation-delay:.2s">
+    Su transacción ha sido procesada con éxito. El pedido ya ingresó a nuestro sistema para su preparación.
+  </p>
+
+  <!-- CÓDIGO DE PEDIDO (estilo "Generando ID…") -->
+  <div class="mt-8 inline-block border border-ink/10 rounded-2xl bg-white px-10 py-6 fade-up" style="animation-delay:.3s">
+    <p class="micro opacity-50">Código de pedido</p>
+    <p id="order-code" class="display text-4xl md:text-5xl text-goldink mt-1">Generando ID…</p>
+    <p id="pay-method" class="micro opacity-40 mt-3"></p>
+  </div>
+
+  <!-- PASOS NUMERADOS (modelo La Foresta, adaptado a Soho) -->
+  <div class="mt-10 grid grid-cols-1 md:grid-cols-3 gap-6 text-left fade-up" style="animation-delay:.4s">
+    <div class="border border-ink/10 rounded-2xl bg-white p-5">
+      <p class="display text-3xl text-goldink">01.</p>
+      <p class="micro mt-1">Correo · Comprobante</p>
+      <p class="text-xs opacity-60 mt-2">El detalle de compra fue enviado a su email con la tarjeta y las coordenadas de entrega. (Revise Spam)</p>
+    </div>
+    <div class="border border-ink/10 rounded-2xl bg-white p-5">
+      <p class="display text-3xl text-goldink">02.</p>
+      <p class="micro mt-1">Taller · Evidencia</p>
+      <p class="text-xs opacity-60 mt-2">Preparamos su arreglo y le enviamos la fotografía del ramo antes de que salga a reparto.</p>
+    </div>
+    <div class="border border-ink/10 rounded-2xl bg-white p-5">
+      <p class="display text-3xl text-goldink">03.</p>
+      <p class="micro mt-1">Logística · Ejecución</p>
+      <p class="text-xs opacity-60 mt-2">Despacho o retiro programado según las coordenadas indicadas, con seguimiento en vivo hasta la puerta.</p>
+    </div>
+  </div>
+
+  <!-- ACCIONES -->
+  <div class="mt-10 flex flex-col md:flex-row gap-3 justify-center fade-up" style="animation-delay:.5s">
+    <a id="track-link" href="/seguimiento.html" class="btn-gold micro px-8 py-4 rounded-full">Seguir mi pedido en vivo</a>
+    <a href="/" class="btn-line micro px-8 py-4 rounded-full">Volver al inicio</a>
+    <a id="wa-link" href="#" target="_blank" class="btn-line micro px-8 py-4 rounded-full">Soporte WhatsApp</a>
+  </div>
+
+  <!-- SELLO DE CONFIANZA -->
+  <div class="mt-12 fade-up" style="animation-delay:.6s">
+    <p class="text-2xl text-gold tracking-[.3em]">★★★★★</p>
+    <p class="micro opacity-50 mt-2">Respaldado por nuestro compromiso de excelencia floral</p>
+  </div>
+</main>
+
+<!-- ══════════ FOOTER ══════════ -->
+<footer class="bg-ink text-ivory/60 py-6">
+  <div class="max-w-4xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-3 micro">
+    <img src="img/soho-flowers-logo-negro-fondo-transparente.webp" alt="Soho Flowers" class="h-7 brightness-0 invert opacity-90">
+    <span>Viña del Mar · Región de Valparaíso</span>
+  </div>
+</footer>
+
+<script src="app.js"></script>
+<script>
+  /* ── Código de pedido: URL → localStorage → fallback ── */
+  const params = new URLSearchParams(location.search);
+  const code = params.get("code")
+    || localStorage.getItem("soho_last_order")
+    || localStorage.getItem("soho_draft_code")
+    || "";
+
+  setTimeout(() => {
+    document.getElementById("order-code").innerText = code || ("SF-" + Date.now().toString().slice(-8));
+  }, 900);
+
+  /* ── Detección de pasarela acreditada ── */
+  const pm = document.getElementById("pay-method");
+  if (params.get("payment_id"))            pm.innerText = "Acreditado vía PayPal · Orden internacional";
+  else if (params.get("payment_status"))   pm.innerText = "Acreditado vía Webpay · " + params.get("payment_status");
+  else                                     pm.innerText = "Acreditado vía pasarela segura";
+
+  /* ── Links con contexto del pedido ── */
+  const waBase = "https://wa.me/56994783520?text=";
+  if (code){
+    document.getElementById("track-link").href = "/seguimiento.html?code=" + encodeURIComponent(code);
+    document.getElementById("wa-link").href = waBase + encodeURIComponent("Hola, acabo de comprar el pedido " + code + " y quería coordinar un detalle:");
+  } else {
+    document.getElementById("wa-link").href = waBase + encodeURIComponent("Hola, acabo de hacer una compra y necesito soporte:");
+  }
+
+  /* ── Limpieza post-compra (app.js ya registró el evento purchase al cargar) ── */
+  localStorage.removeItem("soho_cart");
+  localStorage.removeItem("soho_draft_code");
+  localStorage.removeItem("soho_checkout_inputs");
+  if (typeof updateCartUI === "function") updateCartUI();
+</script>
+</body>
+</html>
