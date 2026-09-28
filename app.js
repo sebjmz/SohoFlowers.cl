@@ -445,18 +445,20 @@ function goStep(n) {
     if (n === 3 && (!validarPaso(1) || !validarPaso(2))) return;
   }
 
+  // En app.js - Actualización de goStep(n)
   [1, 2, 3].forEach(i => {
     $("step-" + i)?.classList.toggle("hidden", i !== n);
-    $("prog-" + i)?.classList.toggle("on", i <= n);
+    const p = $("prog-" + i);
+    if (p) {
+      if (i === n) {
+        p.classList.add("text-goldink", "border-goldink", "opacity-100");
+        p.classList.remove("border-transparent", "opacity-40");
+      } else {
+        p.classList.remove("text-goldink", "border-goldink", "opacity-100");
+        p.classList.add("border-transparent", "opacity-40");
+      }
+    }
   });
-
-  if (n === 2) $("sender-name")?.focus();
-  if (n === 3) renderTotals();
-
-  guardarProgreso();
-  window.trackEvent4D("checkout_step", { step: n });
-}
-
 
 function renderSummary(){
   $("cart-summary").innerHTML = cart.map(i => `
