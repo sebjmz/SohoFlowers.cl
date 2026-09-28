@@ -581,15 +581,14 @@ document.addEventListener("click", function(e){
   }
 }, true);
 
-/* ═══ INIT ═══ */
+/* ═══ INIT (a prueba de páginas sin catálogo: gracias, seguimiento, etc.) ═══ */
 document.addEventListener("DOMContentLoaded", () => {
-  renderGrid(); updateCartUI(); cargarCupos(S.calendarDate);
-  $("date-input").min = mananaStr();
-  if (S.date) setDate(S.date);
-  if (S.logistics === "retiro"){
-    setLogistics("retiro");
-  }
+  if ($("product-grid")) renderGrid();
+  updateCartUI();
+  cargarCupos(S.calendarDate);
+  if ($("date-input")) $("date-input").min = mananaStr();
+  if ($("time-chips") && S.date) setDate(S.date);
+  if ($("mod-retiro") && S.logistics === "retiro") setLogistics("retiro");
   updateCountdown(); setInterval(updateCountdown, 1000);
   restaurarProgreso();
 });
-window.addEventListener("pageshow", e => { if (e.persisted){ restaurarProgreso(); updateCartUI(); } });
