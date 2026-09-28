@@ -24,76 +24,68 @@ tailwind.config = { theme: { extend: {
 {"@context":"https://schema.org","@type":"Florist","name":"Soho Flowers","url":"https://sohoflowers.cl","telephone":"+56951134778","areaServed":["Viña del Mar","Reñaca","Concón","Valparaíso","Quilpué"],"paymentAccepted":"Webpay, PayPal, Débito, Crédito","priceRange":"$21.990 - $230.900"}
 </script>
 <style>
-  html{scroll-behavior:smooth}
-  .display{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:500;letter-spacing:-.01em}
-  .micro{font-size:9px;letter-spacing:.22em;text-transform:uppercase;font-weight:700}
-  .btn-gold{background:#C5A059;color:#0E1512;transition:.25s}
-  .btn-gold:hover{background:#0E1512;color:#C5A059}
-  .btn-line{border:1px solid rgba(14,21,18,.25);transition:.25s}
-  .btn-line:hover{border-color:#C5A059;color:#C5A059}
-  .chip{border:1px solid rgba(14,21,18,.15);transition:.2s}
-  .chip.on{border-color:#C5A059;background:rgba(197,160,89,.08);box-shadow:0 0 0 1px #C5A059}
-  .chip:disabled{opacity:.4;cursor:not-allowed}
-  .fade-up{opacity:0;transform:translateY(14px);animation:fu .7s cubic-bezier(.16,1,.3,1) forwards}
-  @keyframes fu{to{opacity:1;transform:none}}
-  .hide-scroll::-webkit-scrollbar{display:none}
-  input,textarea,select{outline:none}
-  input:focus,textarea:focus{border-color:#C5A059!important}
+  html { scroll-behavior: smooth; }
+  /* Tracking más cerrado en títulos, pesos más ligeros */
+  .display { font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 400; letter-spacing: -0.02em; }
+  .micro { font-size: 9px; letter-spacing: 0.25em; text-transform: uppercase; font-weight: 700; }
+  
+  /* Botones con transiciones lentas y sin bordes pesados */
+  .btn-gold { background: #C5A059; color: #0E1512; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+  .btn-gold:hover { background: #0E1512; color: #C5A059; }
+  .btn-line { border: 1px solid rgba(14,21,18,0.15); transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+  .btn-line:hover { border-color: #C5A059; background: transparent; color: #C5A059; }
+  
+  /* Chips más finos */
+  .chip { border: 1px solid rgba(14,21,18,0.1); transition: 0.3s ease; }
+  .chip.on { border-color: #C5A059; background: transparent; color: #C5A059; }
+  .chip:disabled { opacity: 0.3; cursor: not-allowed; }
+  
+  /* Inputs limpios estilo editorial */
+  input, textarea, select { transition: border-color 0.4s ease; border-radius: 0; box-shadow: none !important; }
+  input:focus, textarea:focus, select:focus { border-color: #C5A059 !important; outline: none; }
+  
+  .fade-up { opacity: 0; transform: translateY(14px); animation: fu 1s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+  @keyframes fu { to { opacity: 1; transform: none; } }
+  .hide-scroll::-webkit-scrollbar { display: none; }
 </style>
 </head>
 <body class="bg-ivory text-ink font-sans antialiased">
 
-<!-- ══════════ HEADER MÍNIMO ══════════ -->
-<header class="sticky top-0 z-40 bg-ivory/90 backdrop-blur-md border-b border-ink/5">
-  <div class="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
-    <a href="/" class="flex items-center" aria-label="Soho Flowers - Ir al inicio">
-      <img src="img/soho-flowers-logo-negro-fondo-transparente.webp" alt="Soho Flowers" class="h-8 md:h-10 mix-blend-multiply">
-    </a>
-    <nav class="flex items-center gap-4 md:gap-6">
-      <a href="/seguimiento.html" class="micro hidden md:block opacity-70 hover:opacity-100">Seguir mi pedido</a>
-      <button onclick="toggleBag()" class="micro btn-line px-4 py-2 rounded-full">Mi pedido <span id="cart-count" class="text-goldink">0</span></button>
-    </nav>
-  </div>
-  <!-- BARRA DE PROMESAS (siempre visible) -->
-  <div class="bg-ink text-ivory/90">
-    <div class="max-w-6xl mx-auto px-4 h-8 flex items-center gap-6 overflow-x-auto hide-scroll micro whitespace-nowrap">
-      <span class="text-gold">Hasta 12 cuotas sin interés · Webpay (débito y crédito nacional)</span>
-      <span>PayPal desde cualquier parte del mundo</span>
-      <span>Express 1–2 h = solo +50% del envío</span>
-      <span>Sin costos fijos extra ni recargos al ramo</span>
+<!-- HEADER -->
+<header class="fixed top-0 w-full z-40 bg-ivory/80 backdrop-blur-xl border-b border-ink/5 transition-all duration-500">
+  <div class="bg-ink text-ivory/80">
+    <div class="max-w-6xl mx-auto px-4 h-6 flex items-center gap-8 overflow-x-auto hide-scroll micro whitespace-nowrap text-[8px]">
+      <span class="text-gold">12 cuotas sin interés</span>
+      <span>Express 1–2 h</span>
       <span>Envío de cortesía sobre $69.990</span>
     </div>
   </div>
+  <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+    <a href="/" class="flex items-center">
+      <img src="img/soho-flowers-logo-negro-fondo-transparente.webp" alt="Soho Flowers" class="h-8 md:h-10 mix-blend-multiply">
+    </a>
+    <nav class="flex items-center gap-6">
+      <button onclick="toggleBag()" class="micro opacity-70 hover:opacity-100 transition duration-300">Mi pedido (<span id="cart-count">0</span>)</button>
+    </nav>
+  </div>
 </header>
 
-<!-- ══════════ HERO: INTENCIÓN INMEDIATA + FONDO SUTIL ══════════ -->
-<section class="relative max-w-6xl mx-auto px-4 pt-14 md:pt-20 pb-10 text-center">
-  <div class="absolute inset-0 overflow-hidden rounded-3xl" aria-hidden="true">
-    <img src="img/hero-soho.webp" onerror="this.style.display='none'" alt="" class="w-full h-full object-cover opacity-10 scale-105">
-    <div class="absolute inset-0 bg-gradient-to-b from-ivory/95 via-ivory/85 to-ivory"></div>
+<!-- HERO -->
+<section class="relative w-full min-h-[95vh] flex items-center justify-center text-center overflow-hidden">
+  <div class="absolute inset-0" aria-hidden="true">
+    <img src="img/hero-soho.webp" alt="" class="w-full h-full object-cover scale-105 opacity-90 transition-transform duration-[15s] ease-out hover:scale-100">
+    <div class="absolute inset-0 bg-gradient-to-t from-ivory via-ivory/40 to-transparent"></div>
   </div>
-  <div class="relative">
-    <p class="micro text-goldink fade-up">Viña · Reñaca · Concón · Despacho hoy</p>
-    <h1 class="display text-5xl md:text-8xl leading-[.95] mt-4 fade-up" style="animation-delay:.1s">
+  <div class="relative z-10 max-w-4xl mx-auto px-4 flex flex-col items-center pt-20">
+    <p class="micro text-goldink fade-up tracking-[0.3em]">Viña · Reñaca · Concón</p>
+    <h1 class="display text-6xl md:text-[8rem] leading-[0.85] mt-6 fade-up" style="animation-delay:.1s">
       Llegan hoy.<br>Impecables.<br><span class="text-goldhero">Sin vueltas.</span>
     </h1>
-    <p class="max-w-xl mx-auto mt-5 text-sm md:text-base opacity-70 fade-up" style="animation-delay:.2s">
-      Eliges fecha y hora en 60 segundos. Pagas en cuotas o desde el extranjero.
-      Nosotros nos encargamos del resto, con foto del arreglo antes de salir y seguimiento en vivo.
-    </p>
-    <!-- BOTONES DE INTENCIÓN: el embudo parte AQUÍ -->
-    <div class="mt-8 flex flex-col md:flex-row items-center justify-center gap-3 fade-up" style="animation-delay:.3s">
-      <button onclick="startFunnel('hoy')" class="btn-gold micro px-8 py-4 rounded-full w-full md:w-auto">Lo necesito hoy →</button>
-      <button onclick="startFunnel('fecha')" class="btn-line micro px-8 py-4 rounded-full w-full md:w-auto">Elegir fecha y hora</button>
-      <a href="#coleccion" class="micro underline underline-offset-4 opacity-60 hover:opacity-100">Ver colección</a>
+    <div class="mt-14 flex flex-col items-center gap-6 fade-up" style="animation-delay:.3s">
+      <button onclick="startFunnel('hoy')" class="btn-gold micro px-12 py-5 rounded-none w-full md:w-auto tracking-widest">Lo necesito hoy</button>
+      <button onclick="startFunnel('fecha')" class="micro opacity-50 hover:opacity-100 transition duration-300 underline underline-offset-8">Elegir fecha y hora</button>
     </div>
-    <p id="express-status" class="micro mt-4 text-goldink"></p>
-    <div class="mt-8 flex flex-wrap justify-center gap-x-6 gap-y-2 micro opacity-60 fade-up" style="animation-delay:.4s">
-      <span>★ 4.9 en +100 reseñas Google</span><span>·</span>
-      <span>Foto del arreglo antes de salir</span><span>·</span>
-      <span>Seguimiento en vivo</span><span>·</span>
-      <span>Garantía de frescura</span>
-    </div>
+    <p id="express-status" class="micro mt-8 text-goldink opacity-70 fade-up" style="animation-delay:.4s"></p>
   </div>
 </section>
 
