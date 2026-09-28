@@ -8,14 +8,14 @@ const CONFIG = {
   brand: "Soho Flowers",
   whatsapp: "56994783520",
   api: {
-    worker:        "https://soho-flowers.sebjmz.workers.dev",
-    flowCreate:    "https://soho-flowers.sebjmz.workers.dev/flow/create",
-    paypalCreate:  "https://soho-flowers.sebjmz.workers.dev/paypal/create-order",
-    paypalCapture: "https://soho-flowers.sebjmz.workers.dev/paypal/capture-order",
-    track:         "https://soho-flowers.sebjmz.workers.dev/api/track",
-    cupos:         "https://soho-flowers.sebjmz.workers.dev/cupos"
+    worker:        "https://api.sohoflowers.cl",
+    flowCreate:    "https://api.sohoflowers.cl/flow/create",
+    paypalCreate:  "https://api.sohoflowers.cl/paypal/create-order",
+    paypalCapture: "https://api.sohoflowers.cl/paypal/capture-order",
+    track:         "https://api.sohoflowers.cl/api/track",
+    cupos:         "https://api.sohoflowers.cl/cupos"
   },
-  paypalClientId: "PON_AQUI_TU_NUEVO_CLIENT_ID_DE_PAYPAL",
+  paypalClientId: "AWd4fnTIy3jVaJAYvFpHJ6N7-ZlQYhQ6F8y400s6", // Pega aquí tu Client ID de PayPal
   freeShipThreshold: 69990,
   freeShipBonus: 7250,
   expressMultiplier: 1.5,
@@ -448,7 +448,7 @@ function writeMsg(kind){
   const iv = setInterval(() => { t.value += msg.charAt(i++); if (i >= msg.length){ clearInterval(iv); guardarProgreso(); } }, 15);
 }
 
-/* ═══ PAYLOAD (compatible con worker y panel 4D) ═══ */
+/* ═══ PAYLOAD (compatible con worker, D1 y panel) ═══ */
 function orderPayload(){
   const t = calcTotals();
   const anon = $("envio-anonimo")?.checked;
@@ -459,6 +459,12 @@ function orderPayload(){
     : `Retiro en Atelier\n• RETIRA: ${$("pickup-name")?.value || ""}`;
   if (note.trim()) logistics += `\n• NOTA: ${note.trim()}`;
   if (S.express && S.logistics === "envio") logistics = "[SERVICIO EXPRESS] " + logistics;
+
+  // Garantizar fecha en formato ISO YYYY-MM-DD para D1 y cupos
+  let fEntrega = S.date;
+  if (fEntrega === "hoy" || !fEntrega) fEntrega = hoyStr();
+  else if (fEntrega === "manana") fEntrega = mananaStr();
+
   return {
     totalCLP: t.total,
     metadata: {
@@ -471,13 +477,15 @@ function orderPayload(){
       time_slot: S.time || "No especificado",
       destination_phone: $("receiver-phone")?.value || "",
       card_text: $("card-message")?.value || "",
+      card_format: "Física",
       total_price: t.total,
       flowers_subtotal_clp: t.sub,
       points_discount_clp: 0,
       order_summary: cart.map(i => `- ${i.name} (Cant: ${i.qty}) [c/u: ${clp(i.price)}]`).join("\n"),
-      fecha_entrega: S.date === "hoy" ? "Hoy" : S.date,
+      fecha_entrega: fEntrega,
       valor_envio: t.ship - t.bonus,
       comprador_email: $("buyer-email")?.value || "",
+      buyer_whatsapp: $("buyer-whatsapp")?.value \vert{}\vert{} $("receiver-phone")?.value || "",
       express: S.express
     }
   };
@@ -489,13 +497,34 @@ async function payFlow(){
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return alert("Necesitamos tu correo para la confirmación.");
   if (S.logistics === "envio" && (!S.zone || !$("address").value.trim())) return alert("Falta zona o dirección de entrega.");
   if (!S.time) return alert("Elige un bloque horario.");
+  
   window.trackEvent4D("payment_initiated", { method:"FlowWebpay", cart_value: flowersSubtotal(), order_code: S.code });
+  
   try {
-    const r = await fetch(CONFIG.api.flowCreate, { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(orderPayload()) });
+    const payload = orderPayload();
+    // Aplanar campos requeridos por el Worker
+    const flowBody = {
+      ...payload.metadata,
+      total_price: payload.totalCLP,
+      totalCLP: payload.totalCLP
+    };
+
+    const r = await fetch(CONFIG.api.flowCreate, { 
+      method: "POST", 
+      headers: { "Content-Type": "application/json" }, 
+      body: JSON.stringify(flowBody) 
+    });
+    
     const d = await r.json();
-    if (d.url){ localStorage.removeItem("soho_draft_code"); window.location.href = d.url; }
-    else throw 0;
-  } catch(e){ alert("Error al conectar con Webpay. Intenta nuevamente o usa PayPal."); }
+    if (d.url){ 
+      localStorage.removeItem("soho_draft_code"); 
+      window.location.href = d.url; 
+    } else {
+      throw new Error(d.error || "No se pudo generar el enlace de pago");
+    }
+  } catch(e){ 
+    alert("Error al conectar con Webpay: " + (e.message || "Intenta nuevamente o usa PayPal.")); 
+  }
 }
 
 /* ═══ PAGO 2: PAYPAL (internacional) ═══ */
