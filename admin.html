@@ -28,7 +28,7 @@ tailwind.config = { theme: { extend: {
   .fade-in{animation:fi .4s ease forwards}
   @keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
   .status-pill{font-size:9px;letter-spacing:.18em;text-transform:uppercase;font-weight:700;padding:3px 10px;border-radius:9999px}
-  .status-confirmado{background:#0E1512;color:#FBFAF8}
+  .status-confirmado, .status-recibido{background:#0E1512;color:#FBFAF8}
   .status-transito{background:#C5A059;color:#0E1512}
   .status-entregado{background:#E8F3E8;color:#2F6B2F}
   .status-pendiente{background:rgba(14,21,18,.08);color:rgba(14,21,18,.6)}
@@ -87,38 +87,35 @@ tailwind.config = { theme: { extend: {
 
     <label class="micro block mt-4">Estado del envío</label>
     <select id="f-status" class="w-full mt-1 border border-ink/15 rounded-xl px-4 py-3 text-sm bg-ivory outline-none focus:border-gold">
-      <option value="confirmado">🌸 Confirmado (en taller)</option>
+      <option value="recibido">🌸 Confirmado / Recibido (en taller)</option>
       <option value="transito">🚚 En tránsito (en camino)</option>
       <option value="entregado">✅ Entregado</option>
     </select>
 
     <label class="micro block mt-4">Evidencia fotográfica (opcional)</label>
-    <!-- Input oculto que invoca directamente la cámara trasera del smartphone -->
-<input 
-  type="file" 
-  id="cameraInput" 
-  accept="image/*" 
-  capture="environment" 
-  style="display: none;" 
-  onchange="handleImageSelection(event)"
->
+    <!-- Invocación nativa a la cámara trasera -->
+    <input 
+      type="file" 
+      id="cameraInput" 
+      accept="image/*" 
+      capture="environment" 
+      style="display: none;" 
+      onchange="handleImageSelection(event)"
+    >
 
-<!-- Botón visual para disparar la cámara -->
-<button 
-  type="button" 
-  onclick="document.getElementById('cameraInput').click();"
-  class="w-full mt-2 py-3 px-4 rounded-xl font-medium text-sm flex items-center justify-center gap-2 bg-[#C5A059] text-[#0A1F1C] hover:opacity-90 transition-opacity"
->
-  📷 Abrir Cámara y Tomar Foto
-</button>
-<p class="text-[10px] opacity-40 mt-1">Se comprime automáticamente a máximo 1000 px · formato JPEG 60%.</p>
-<img id="preview" class="hidden mt-3 rounded-xl max-h-56 w-full object-cover border border-ink/10" alt="Evidencia">
-    <p class="text-[10px] opacity-40 mt-1">Se comprime automáticamente a máximo 1000 px · formato JPEG 72%.</p>
-<img id="preview" class="hidden mt-3 rounded-xl max-h-56 w-full object-cover border border-ink/10">
+    <button 
+      type="button" 
+      onclick="document.getElementById('cameraInput').click();"
+      class="w-full mt-2 py-3 px-4 rounded-xl font-medium text-sm flex items-center justify-center gap-2 bg-[#C5A059] text-[#0E1512] hover:opacity-90 transition-opacity"
+    >
+      📷 Abrir Cámara y Tomar Foto
+    </button>
+    <p class="text-[10px] opacity-40 mt-1">Se comprime automáticamente a máximo 1000 px · formato JPEG 60%.</p>
+    <img id="preview" class="hidden mt-3 rounded-xl max-h-56 w-full object-cover border border-ink/10" alt="Evidencia">
 
     <label class="flex items-center gap-2 mt-4 text-xs cursor-pointer select-none">
       <input id="f-notify" type="checkbox" checked class="accent-[#C5A059] w-4 h-4">
-      <span>Notificar al cliente por correo (Brevo) con la foto</span>
+      <span>Notificar al cliente por correo con la foto</span>
     </label>
 
     <button onclick="guardar()" id="btn-save" class="w-full mt-6 bg-ink text-ivory micro py-4 rounded-full hover:bg-gold hover:text-ink transition">Guardar y notificar</button>
@@ -136,165 +133,25 @@ tailwind.config = { theme: { extend: {
 <script>
 /* ═══════════════════════════════════════════════════════════════
    SOHO CONTROL · Panel de operaciones
-   Consume: soho-flowers.sebjmz.workers.dev
    ═══════════════════════════════════════════════════════════════ */
-const API = "https://soho-flowers.sebjmz.workers.dev";
+const API = "https://api.sohoflowers.cl";
 const $ = id => document.getElementById(id);
 const tok = () => sessionStorage.getItem("soho_admin");
 const hoy = () => {
   const d = new Date(new Date().toLocaleString("en-US",{timeZone:"America/Santiago"}));
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
 };
-let photoData = null;
 
-/* ── Login ── */
-async function entrar(){
-  $("login-error").classList.add("opacity-0");
-  $("btn-login").innerText = "VERIFICANDO…";
-  $("btn-login").disabled = true;
-  try {
-    const r = await fetch(API + "/api/admin/ping", { headers:{ Authorization:"Bearer " + $("pass").value } });
-    if (r.ok){
-      sessionStorage.setItem("soho_admin", $("pass").value);
-      $("login").remove();
-      iniciar();
-    } else {
-      $("login-error").classList.remove("opacity-0");
-    }
-  } catch(e){
-    $("login-error").innerText = "Sin conexión con el servidor";
-    $("login-error").classList.remove("opacity-0");
-  }
-  $("btn-login").innerText = "ACCEDER";
-  $("btn-login").disabled = false;
-}
-function salir(){ sessionStorage.removeItem("soho_admin"); location.reload(); }
-function iniciar(){
-  if (!tok()) return;
-  $("fecha-actual").innerText = new Date().toLocaleDateString("es-CL",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
-  cargarPedidos();
-}
-if (tok()){ $("login").remove(); iniciar(); }
+let currentCompressedBase64 = null;
 
-/* ── Tabs ── */
-function tab(t){
-  $("tab-logistica").className = t==="logistica" ? "text-gold border-b border-gold pb-1" : "opacity-60 pb-1 hover:opacity-100";
-  $("tab-pedidos").className   = t==="pedidos"   ? "text-gold border-b border-gold pb-1" : "opacity-60 pb-1 hover:opacity-100";
-  $("view-logistica").classList.toggle("hidden", t!=="logistica");
-  $("view-pedidos").classList.toggle("hidden", t!=="pedidos");
-}
-
-/* ── Cargar pedidos ── */
-async function cargarPedidos(){
-  const cont = $("orders");
-  cont.innerHTML = `<p class="text-center opacity-40 py-10 text-sm">Cargando pedidos…</p>`;
-  try {
-    const r = await fetch(`${API}/api/admin/orders?dia=${hoy()}`, { headers:{ Authorization:"Bearer "+tok() } });
-    if (r.status === 401){ salir(); return; }
-    const list = await r.json();
-    if (!list.length){
-      cont.innerHTML = `<p class="micro opacity-40 text-center py-10">Sin pedidos registrados hoy.</p>`;
-      return;
-    }
-    cont.innerHTML = list.map(o => {
-      const statusClass = "status-" + (o.status || "pendiente");
-      const statusLabel = { confirmado:"En taller", transito:"En camino", entregado:"Entregado", pendiente:"Pendiente" }[o.status] || o.status;
-      const logisticsFirst = (o.logistics || "").split("\n")[0];
-      return `
-      <button onclick="usar('${o.code}','${o.status || 'confirmado'}')" class="w-full text-left border border-ink/10 rounded-2xl px-5 py-4 bg-white hover:border-gold transition fade-in">
-        <div class="flex justify-between items-center gap-3">
-          <span class="display text-xl">${o.code}</span>
-          <span class="status-pill ${statusClass}">${statusLabel}</span>
-        </div>
-        <p class="text-xs opacity-60 mt-1"><b>${o.receiver || "—"}</b> · ${o.date || "—"} · ${o.slot || "—"}</p>
-        <p class="text-[10px] opacity-40 mt-0.5 line-clamp-1">${logisticsFirst}</p>
-        ${o.email ? `<p class="text-[10px] opacity-40 mt-0.5">${o.email}</p>` : ""}
-      </button>`;
-    }).join("");
-  } catch(e){
-    cont.innerHTML = `<p class="micro text-goldink text-center py-10">Error al cargar pedidos. Verifica tu conexión.</p>`;
-  }
-}
-function usar(code, status){
-  $("f-code").value = code;
-  $("f-status").value = status;
-  tab("logistica");
-  window.scrollTo({ top: 0, behavior:"smooth" });
-}
-
-/* ── Compresión de foto (canvas) ── */
-$("f-photo").addEventListener("change", e => {
-  const f = e.target.files[0];
-  if (!f){ photoData = null; $("preview").classList.add("hidden"); return; }
-  const rd = new FileReader();
-  rd.onload = ev => {
-    const img = new Image();
-    img.onload = () => {
-      const maxDim = 1000;
-      const sc = Math.min(1, maxDim / Math.max(img.width, img.height));
-      const c = document.createElement("canvas");
-      c.width = img.width * sc;
-      c.height = img.height * sc;
-      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
-      photoData = c.toDataURL("image/jpeg", 0.72);
-      $("preview").src = photoData;
-      $("preview").classList.remove("hidden");
-    };
-    img.src = ev.target.result;
-  };
-  rd.readAsDataURL(f);
-});
-
-/* ── Guardar + notificar ── */
-async function guardar(){
-  const code = $("f-code").value.trim();
-  if (!code){ alert("Ingresa el código del pedido."); return; }
-  const btn = $("btn-save");
-  btn.disabled = true;
-  btn.innerText = "GUARDANDO…";
-  $("msg").classList.add("opacity-0");
-
-  const stage = $("f-status").value === "entregado" ? "entrega" : "confirm";
-  try {
-    const r = await fetch(API + "/api/admin/update", {
-      method:"POST",
-      headers:{ Authorization:"Bearer "+tok(), "Content-Type":"application/json" },
-      body: JSON.stringify({
-        code,
-        status: $("f-status").value,
-        photo: photoData,
-        stage,
-        notify: $("f-notify").checked
-      })
-    });
-    if (r.status === 401){ salir(); return; }
-    if (r.ok){
-      $("msg").innerText = "✓ Guardado" + ($("f-notify").checked ? " y cliente notificado por correo" : "");
-      $("msg").classList.remove("opacity-0");
-      // Reset form
-      photoData = null;
-      $("preview").classList.add("hidden");
-      $("f-photo").value = "";
-      cargarPedidos();
-    } else {
-      throw new Error("save_failed");
-    }
-  } catch(e){
-    $("msg").innerText = "✗ Error al guardar. Revisa tu conexión.";
-    $("msg").classList.remove("opacity-0");
-  }
-  btn.disabled = false;
-  btn.innerText = "Guardar y notificar";
-}
-
-/* ── Auto-refresh cada 30s ── */
-setInterval(() => { if (tok() && !$("view-pedidos").classList.contains("hidden")) cargarPedidos(); }, 30000);
-</script>
-  let currentCompressedBase64 = null;
-
+/* ── Compresión fotográfica Canvas ── */
 function handleImageSelection(event) {
   const file = event.target.files[0];
-  if (!file) return;
+  if (!file) {
+    currentCompressedBase64 = null;
+    $("preview").classList.add("hidden");
+    return;
+  }
 
   const reader = new FileReader();
   reader.onload = function(e) {
@@ -319,10 +176,9 @@ function handleImageSelection(event) {
       const ctx = canvas.getContext('2d');
       ctx.drawImage(img, 0, 0, width, height);
 
-      // Compresión en JPEG al 60% (~80-120 KB)
       currentCompressedBase64 = canvas.toDataURL('image/jpeg', 0.6);
-      
-      const preview = document.getElementById('preview');
+
+      const preview = $("preview");
       if (preview) {
         preview.src = currentCompressedBase64;
         preview.classList.remove('hidden');
@@ -332,5 +188,158 @@ function handleImageSelection(event) {
   };
   reader.readAsDataURL(file);
 }
+
+/* ── Login ── */
+async function entrar(){
+  $("login-error").classList.add("opacity-0");
+  $("btn-login").innerText = "VERIFICANDO…";
+  $("btn-login").disabled = true;
+  try {
+    const r = await fetch(API + "/api/admin/ping", { 
+      headers: { Authorization: "Bearer " + $("pass").value } 
+    });
+    if (r.ok){
+      sessionStorage.setItem("soho_admin", $("pass").value);
+      $("login").remove();
+      iniciar();
+    } else {
+      $("login-error").classList.remove("opacity-0");
+    }
+  } catch(e){
+    $("login-error").innerText = "Sin conexión con el servidor";
+    $("login-error").classList.remove("opacity-0");
+  }
+  $("btn-login").innerText = "ACCEDER";
+  $("btn-login").disabled = false;
+}
+
+function salir(){ 
+  sessionStorage.removeItem("soho_admin"); 
+  location.reload(); 
+}
+
+function iniciar(){
+  if (!tok()) return;
+  $("fecha-actual").innerText = new Date().toLocaleDateString("es-CL",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+  cargarPedidos();
+}
+if (tok()){ $("login").remove(); iniciar(); }
+
+/* ── Tabs ── */
+function tab(t){
+  $("tab-logistica").className = t==="logistica" ? "text-gold border-b border-gold pb-1" : "opacity-60 pb-1 hover:opacity-100";
+  $("tab-pedidos").className   = t==="pedidos"   ? "text-gold border-b border-gold pb-1" : "opacity-60 pb-1 hover:opacity-100";
+  $("view-logistica").classList.toggle("hidden", t!=="logistica");
+  $("view-pedidos").classList.toggle("hidden", t!=="pedidos");
+}
+
+/* ── Cargar pedidos desde D1 ── */
+async function cargarPedidos(){
+  const cont = $("orders");
+  cont.innerHTML = `<p class="text-center opacity-40 py-10 text-sm">Cargando pedidos…</p>`;
+  try {
+    const r = await fetch(`${API}/api/admin/orders?dia=${hoy()}`, { 
+      headers: { Authorization: "Bearer " + tok() } 
+    });
+    if (r.status === 401){ salir(); return; }
+    const res = await r.json();
+    const list = Array.isArray(res) ? res : (res.orders || []);
+    
+    if (!list.length){
+      cont.innerHTML = `<p class="micro opacity-40 text-center py-10">Sin pedidos registrados hoy.</p>`;
+      return;
+    }
+
+    cont.innerHTML = list.map(o => {
+      const code = o.id || o.code || "SF-0";
+      const status = o.status || "recibido";
+      const statusClass = "status-" + status;
+      const statusLabel = { 
+        recibido: "En taller", 
+        confirmado: "En taller", 
+        transito: "En camino", 
+        entregado: "Entregado", 
+        pendiente: "Pendiente" 
+      }[status] || status;
+
+      const receiver = o.receptor || o.receiver || "—";
+      const date = o.fecha_entrega || o.date || "—";
+      const slot = o.horario_entrega || o.slot || "—";
+      const logisticsFirst = (o.logistica_detalle || o.logistics || "").split("\n")[0];
+      const email = o.comprador_email || o.email || "";
+
+      return `
+      <button onclick="usar('${code}','${status}')" class="w-full text-left border border-ink/10 rounded-2xl px-5 py-4 bg-white hover:border-gold transition fade-in">
+        <div class="flex justify-between items-center gap-3">
+          <span class="display text-xl">${code}</span>
+          <span class="status-pill ${statusClass}">${statusLabel}</span>
+        </div>
+        <p class="text-xs opacity-60 mt-1"><b>${receiver}</b> · ${date} · ${slot}</p>
+        <p class="text-[10px] opacity-40 mt-0.5 line-clamp-1">${logisticsFirst}</p>
+        ${email ? `<p class="text-[10px] opacity-40 mt-0.5">${email}</p>` : ""}
+      </button>`;
+    }).join("");
+  } catch(e){
+    cont.innerHTML = `<p class="micro text-goldink text-center py-10">Error al cargar pedidos. Verifica tu conexión.</p>`;
+  }
+}
+
+function usar(code, status){
+  $("f-code").value = code;
+  $("f-status").value = status === "confirmado" ? "recibido" : status;
+  tab("logistica");
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+/* ── Guardar + notificar ── */
+async function guardar(){
+  const code = $("f-code").value.trim();
+  if (!code){ alert("Ingresa el código del pedido."); return; }
+  const btn = $("btn-save");
+  btn.disabled = true;
+  btn.innerText = "GUARDANDO…";
+  $("msg").classList.add("opacity-0");
+
+  try {
+    const r = await fetch(API + "/api/admin/tracking", {
+      method: "POST",
+      headers: { 
+        Authorization: "Bearer " + tok(), 
+        "Content-Type": "application/json" 
+      },
+      body: JSON.stringify({
+        order_id: code,
+        status: $("f-status").value,
+        photo: currentCompressedBase64,
+        notify: $("f-notify").checked
+      })
+    });
+
+    if (r.status === 401){ salir(); return; }
+    const data = await r.json();
+
+    if (r.ok && data.ok){
+      $("msg").innerText = "✓ Pedido actualizado con éxito";
+      $("msg").classList.remove("opacity-0");
+      currentCompressedBase64 = null;
+      $("preview").classList.add("hidden");
+      $("cameraInput").value = "";
+      cargarPedidos();
+    } else {
+      throw new Error(data.error || "save_failed");
+    }
+  } catch(e){
+    $("msg").innerText = "✗ Error al guardar: " + (e.message || "Revisa conexión");
+    $("msg").classList.remove("opacity-0");
+  }
+  btn.disabled = false;
+  btn.innerText = "Guardar y notificar";
+}
+
+/* ── Auto-refresh cada 30s ── */
+setInterval(() => { 
+  if (tok() && !$("view-pedidos").classList.contains("hidden")) cargarPedidos(); 
+}, 30000);
+</script>
 </body>
 </html>
