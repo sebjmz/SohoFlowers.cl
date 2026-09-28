@@ -19,7 +19,7 @@ const CONFIG = {
   freeShipThreshold: 69990,
   freeShipBonus: 7250,
   expressMultiplier: 1.5,
-  expressCutoffHour: 18,
+  expressCutoffHour: 19,
   cuposPorDia: 30,
   zones: [
     { id:1, name:"Central",     price:3500,  detail:"Reñaca Centro, Los Almendros, Jardín del Mar, Los Pinos" },
@@ -559,28 +559,44 @@ function pickCalendarDay(dateStr){
 
 /* ═══ HORARIOS INTELIGENTES + EXPRESS ═══ */
 function renderTimes(){
+  const chips = $("time-chips"); if (!chips) return;
   const isHoy = S.date === "hoy" || S.date === hoyStr();
   const now = hoyDate();
   const h = now.getHours() + now.getMinutes()/60;
   let html = "";
-  if (!isHoy){
-    html = ["Mañana (11:00–13:00)","Mediodía (14:00–17:00)","Tarde (18:00–21:00)"]
-      .map(t => `<button onclick="setTime(this,'${t}',false)" class="chip px-4 py-3 micro rounded-full">${t}</button>`).join("");
+  
+  if (!S.date){
+    html = "";
+  } else if (!isHoy){
+    html = ["Mañana (10:00–13:00)","Mediodía (14:00–17:00)","Tarde (18:00–21:00)"].map(t => timeChip(t, false)).join("");
   } else {
-    if (h < 7)  html += `<button onclick="setTime(this,'Mañana (11:00–13:00)',false)" class="chip px-4 py-3 micro rounded-full">Mañana (11:00–13:00)</button>`;
-    if (h < 11) html += `<button onclick="setTime(this,'Mediodía (14:00–17:00)',false)" class="chip px-4 py-3 micro rounded-full">Mediodía (14:00–17:00)</button>`;
-    if (h < 14) html += `<button onclick="setTime(this,'Tarde (18:00–21:00)',false)" class="chip px-4 py-3 micro rounded-full">Tarde (18:00–21:00)</button>`;
-    if (S.logistics === "envio" && h < CONFIG.expressCutoffHour){
-      html += `<p class="w-full micro text-goldink pt-3">Express 1–2 h (+50% solo sobre el envío):</p>`;
-      let a = Math.max(10, Math.ceil(h+1));
-      while (a < 20){
-        html += `<button onclick="setTime(this,'Express (${String(a).padStart(2,"0")}:00–${String(a+1).padStart(2,"0")}:00)',true)" class="chip px-4 py-3 micro rounded-full !border-gold text-goldink">${String(a).padStart(2,"0")}:00–${String(a+1).padStart(2,"0")}:00</button>`;
-        a++;
+    if (h < 9)  html += timeChip("Mañana (10:00–13:00)", false);
+    if (h < 11) html += timeChip("Mediodía (14:00–17:00)", false);
+    if (h < 14) html += timeChip("Tarde (18:00–21:00)", false);
+    
+    if (S.logistics === "envio") {
+      let startExpress = now.getMinutes() === 0 ? now.getHours() + 1 : now.getHours() + 2;
+      startExpress = Math.max(10, startExpress);
+      
+      if (startExpress <= 20) {
+        html += `<p class="w-full micro text-goldink pt-3">Express 1–2 h (+50% solo sobre el envío):</p>`;
+        let a = startExpress;
+        while (a <= 20){
+          html += timeChip(`Express (${String(a).padStart(2,"0")}:00–${String(a+1).padStart(2,"0")}:00)`, true);
+          a++;
+        }
       }
     }
   }
-  $("time-chips").innerHTML = html || `<p class="micro opacity-50">Entregas de hoy cerradas. Elige otra fecha.</p>`;
+  
+  chips.innerHTML = html || `<p class="micro opacity-50">${S.date ? "Entregas de hoy cerradas. Elige otra fecha." : "Elige una fecha para ver horarios."}</p>`;
+  
+  if (S.time && !highlightTimeChip(S.time)) {
+    S.time = "";
+    S.express = false;
+  }
 }
+
 function setTime(el, t, express){
   S.time = t; S.express = express;
   document.querySelectorAll("#time-chips .chip").forEach(b => b.classList.remove("on"));
