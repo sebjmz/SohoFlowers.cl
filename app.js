@@ -508,10 +508,32 @@ async function cargarCupos(fechaDate){
   try { const r = await fetch(`${CONFIG.api.cupos}?mes=${yyyy}-${mm}`); if (r.ok) cuposMes = await r.json(); } catch(e){}
   updateHoyButton();
 }
+
+function getCuposLibres(dateStr) {
+  const vendidos = cuposMes[dateStr] || 0;
+  if (dateStr !== hoyStr()) {
+    return Math.max(0, CONFIG.cuposPorDia - vendidos);
+  }
+  
+  const now = hoyDate();
+  const h = now.getHours();
+  let descuentoTiempo = 0;
+  
+  if (h >= 10) {
+    const horasPasadas = Math.min(h - 10, 9); // Calcula hasta las 19:00 max
+    descuentoTiempo = horasPasadas * 3;
+  }
+  
+  // Se descuenta el mayor valor entre el paso del tiempo y las ventas reales
+  const descuentoTotal = Math.max(descuentoTiempo, vendidos);
+  return Math.max(0, CONFIG.cuposPorDia - descuentoTotal);
+}
+
 function updateHoyButton(){
   const btn = $("date-hoy"); if (!btn) return;
-  const libres = CONFIG.cuposPorDia - (cuposMes[hoyStr()] || 0);
+  const libres = getCuposLibres(hoyStr());
   const now = hoyDate();
+  
   if (libres <= 0 || now.getHours() >= CONFIG.expressCutoffHour){
     btn.innerHTML = `<span class="line-through opacity-50">Hoy</span><span class="text-[9px] text-goldink block mt-0.5">Agotado</span>`;
     btn.disabled = true;
@@ -520,6 +542,7 @@ function updateHoyButton(){
     btn.disabled = false;
   } else { btn.innerHTML = `Hoy`; btn.disabled = false; }
 }
+
 function renderCalendar(){
   const grid = $("calendar-grid"), title = $("cal-month-title"); if (!grid || !title) return;
   const today = hoyDate();
@@ -535,7 +558,7 @@ function renderCalendar(){
     const d = new Date(r, o, day); d.setHours(0,0,0,0);
     const t = new Date(today); t.setHours(0,0,0,0);
     const dateStr = `${r}-${String(o+1).padStart(2,"0")}-${String(day).padStart(2,"0")}`;
-    const libres = CONFIG.cuposPorDia - (cuposMes[dateStr] || 0);
+    const libres = getCuposLibres(dateStr);
     if (d.getTime() < t.getTime()) grid.innerHTML += `<div class="py-3 text-center opacity-30 font-serif">${day}</div>`;
     else if (libres <= 0) grid.innerHTML += `<button disabled class="py-3 font-serif line-through opacity-40 cursor-not-allowed">${day}</button>`;
     else {
@@ -779,7 +802,7 @@ function payPayPal(){
 function updateCountdown(){
   const el = $("express-status"); if (!el) return;
   const now = hoyDate();
-  const libres = CONFIG.cuposPorDia - (cuposMes[hoyStr()] || 0);
+  const libres = getCuposLibres(hoyStr());
   if (libres <= 0 || now.getHours() >= CONFIG.expressCutoffHour){ el.innerText = "Express de hoy agotado · Agenda para mañana"; return; }
   const cutoff = new Date(now); cutoff.setHours(CONFIG.expressCutoffHour,0,0,0);
   const ms = cutoff - now;
