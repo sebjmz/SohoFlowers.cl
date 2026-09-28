@@ -86,6 +86,8 @@ let S = {
 };
 let cuposMes = {};
 const pageStartTime = Date.now();
+let paypalLoaded = false;
+let paypalRendered = false;
 
 try {
   cart = JSON.parse(localStorage.getItem("soho_cart")) || [];
@@ -578,6 +580,27 @@ function pickCalendarDay(dateStr){
   closeCalendar(); 
   renderTimes(); 
   guardarProgreso();
+}
+
+function slotMatches(btn, timeValue){
+  if (!timeValue) return false;
+  const slot = (btn.getAttribute("data-slot") || "").trim();
+  const text = (btn.innerText || "").trim();
+  return slot === timeValue || text === timeValue || timeValue.indexOf(text) !== -1 && text.length >= 8;
+}
+
+function highlightTimeChip(timeValue){
+  let matched = false;
+  document.querySelectorAll("#time-chips .chip").forEach(b => {
+    const on = slotMatches(b, timeValue);
+    b.classList.toggle("on", on);
+    if (on) matched = true;
+  });
+  return matched;
+}
+
+function timeChip(label, express){
+  return `<button type="button" data-slot="${label}" onclick="setTime(this,'${label}',${express})" class="chip px-4 py-3 micro rounded-full${express ? " !border-gold text-goldink" : ""}">${express ? label.replace(/^Express \((.+)\)$/, "$1") : label}</button>`;
 }
 
 /* ═══ HORARIOS INTELIGENTES + EXPRESS ═══ */
