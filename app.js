@@ -227,18 +227,19 @@ function filterOccasion(occ){
 /* ═══ CATÁLOGO ═══ */
 function renderGrid(){
   const items = S.occasion === "todos" ? CATALOG : CATALOG.filter(p => p.occ === S.occasion);
+  $("product-grid").className = "grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-12 md:gap-x-6 md:gap-y-16";
+  
   $("product-grid").innerHTML = items.map(p => `
-    <div class="group flex flex-col">
-      <div class="relative aspect-square bg-white rounded-2xl overflow-hidden border border-ink/5">
-        <span class="display text-4xl text-ink/10 absolute inset-0 flex items-center justify-center">SF</span>
-        <img src="${p.img}" onerror="this.style.opacity='0'" loading="lazy" alt="${p.name}" class="absolute inset-0 w-full h-full object-cover transition duration-700 group-hover:scale-105">
-        ${BADGES.includes(p.id) ? `<span class="absolute top-3 left-3 z-10 bg-ivory/90 backdrop-blur-md px-2 py-1 micro text-ink">Más Vendidos</span>` : ""}
+    <div class="group flex flex-col cursor-pointer" onclick="addToCart(${p.id})">
+      <div class="relative aspect-[4/5] bg-ink/5 rounded-none overflow-hidden mb-4">
+        <img src="${p.img}" loading="lazy" alt="${p.name}" class="absolute inset-0 w-full h-full object-cover transition-transform duration-[800ms] ease-out group-hover:scale-[1.04]">
+        ${BADGES.includes(p.id) ? `<span class="absolute top-4 left-4 z-10 bg-ivory/80 backdrop-blur-md px-3 py-1.5 micro text-[8px] text-ink">Más Vendidos</span>` : ""}
       </div>
-      <h3 class="display text-xl md:text-2xl mt-3 leading-tight">${p.name}</h3>
-      <p class="text-[10px] uppercase tracking-widest opacity-50 mt-1 line-clamp-2">${p.desc}</p>
-      <div class="mt-auto pt-3 flex items-center justify-between gap-2">
-        <span class="display text-xl md:text-2xl">${clp(p.price)}</span>
-        <button onclick="addToCart(${p.id})" class="btn-gold micro px-4 py-3 rounded-full whitespace-nowrap">Elegir →</button>
+      <h3 class="display text-2xl md:text-3xl leading-none text-ink">${p.name}</h3>
+      <p class="text-[11px] font-sans opacity-50 mt-2 line-clamp-2 leading-relaxed">${p.desc}</p>
+      <div class="mt-4 flex items-center justify-between">
+        <span class="display text-2xl text-ink">${clp(p.price)}</span>
+        <span class="micro opacity-0 group-hover:opacity-100 transition-opacity duration-500 text-goldink">Agregar +</span>
       </div>
     </div>`).join("");
 }
