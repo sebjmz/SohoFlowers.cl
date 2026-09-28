@@ -93,6 +93,8 @@ try {
   S.date      = localStorage.getItem("soho_date")      || "";
   S.time      = localStorage.getItem("soho_time")      || "";
   S.express   = localStorage.getItem("soho_express")   === "true";
+  const savedZ = localStorage.getItem("soho_zone_id");
+  if (savedZ) S.zone = CONFIG.zones.find(z => z.id === parseInt(savedZ, 10)) || null;
 } catch(e) { console.warn("Storage privado, memoria limitada."); }
 
 /* ═══ SESIÓN & TRACKING 4D ═══ */
@@ -123,33 +125,84 @@ document.addEventListener("DOMContentLoaded", () => {
   if ($("wa-footer")) $("wa-footer").href = wa;
 });
 
-/* ═══ PERSISTENCIA DEL CHECKOUT (incluye quién retira) ═══ */
+/* ═══ PERSISTENCIA DEL CHECKOUT TOTAL ═══ */
 function guardarProgreso(){
   const data = {
-    buyerEmail:   $("buyer-email")?.value    || "",
-    senderName:   $("sender-name")?.value    || "",
-    receiverName: $("receiver-name")?.value  || "",
-    receiverPhone:$("receiver-phone")?.value || "",
-    address:      $("address")?.value        || "",
-    pickupName:   $("pickup-name")?.value    || "",
-    deliveryNote: $("delivery-note")?.value  || "",
-    cardMessage:  $("card-message")?.value   || "",
-    isAnon:       $("envio-anonimo")?.checked || false
+    buyerEmail:    $("buyer-email")?.value    || "",
+    buyerWhatsapp: $("buyer-whatsapp")?.value || "",
+    senderName:    $("sender-name")?.value    || "",
+    receiverName:  $("receiver-name")?.value  || "",
+    receiverPhone: $("receiver-phone")?.value || "",
+    address:       $("address")?.value        || "",
+    pickupName:    $("pickup-name")?.value    || "",
+    deliveryNote:  $("delivery-note")?.value  || "",
+    cardMessage:   $("card-message")?.value   || "",
+    isAnon:        $("envio-anonimo")?.checked || false
   };
+  
   localStorage.setItem("soho_checkout_inputs", JSON.stringify(data));
   localStorage.setItem("soho_logistics", S.logistics);
-  localStorage.setItem("soho_date", S.date);
-  localStorage.setItem("soho_time", S.time);
+  if (S.zone && S.zone.id) {
+    localStorage.setItem("soho_zone_id", String(S.zone.id));
+  } else {
+    localStorage.removeItem("soho_zone_id");
+  }
+  localStorage.setItem("soho_date", S.date || "");
+  localStorage.setItem("soho_time", S.time || "");
   localStorage.setItem("soho_express", String(S.express));
 }
+
 function restaurarProgreso(){
+  // 1. Restaurar textos y checkbox
   const data = JSON.parse(localStorage.getItem("soho_checkout_inputs") || "{}");
-  ["buyer-email","sender-name","receiver-name","receiver-phone","address","pickup-name","delivery-note","card-message"].forEach(id => {
+  const fields = [
+    "buyer-email", "buyer-whatsapp", "sender-name", "receiver-name",
+    "receiver-phone", "address", "pickup-name", "delivery-note", "card-message"
+  ];
+  fields.forEach(id => {
     const el = $(id);
     const key = id.replace(/-([a-z])/g, (_,l) => l.toUpperCase());
-    if (el && data[key]) el.value = data[key];
+    if (el && data[key] !== undefined) {
+      el.value = data[key];
+    }
   });
-  if ($("envio-anonimo") && data.isAnon !== undefined) $("envio-anonimo").checked = data.isAnon;
+  if ($("envio-anonimo") && data.isAnon !== undefined) {
+    $("envio-anonimo").checked = data.isAnon;
+  }
+
+  // 2. Restaurar modalidad (Envío vs Retiro)
+  const savedLogistics = localStorage.getItem("soho_logistics") || "envio";
+  setLogistics(savedLogistics);
+
+  // 3. Restaurar zona y marcar su botón
+  const savedZoneId = parseInt(localStorage.getItem("soho_zone_id"), 10);
+  if (savedZoneId) {
+    setZone(savedZoneId);
+  }
+
+  // 4. Restaurar fecha y marcar su botón
+  const savedDate = localStorage.getItem("soho_date");
+  if (savedDate) {
+    S.date = savedDate;
+    $("date-hoy")?.classList.toggle("on", savedDate === "hoy");
+    $("date-manana")?.classList.toggle("on", savedDate === "manana");
+    renderTimes();
+  }
+
+  // 5. Restaurar horario y marcar chip activo
+  const savedTime = localStorage.getItem("soho_time");
+  const savedExpress = localStorage.getItem("soho_express") === "true";
+  if (savedTime) {
+    S.time = savedTime;
+    S.express = savedExpress;
+    document.querySelectorAll("#time-chips .chip").forEach(b => {
+      if (b.innerText.trim() === savedTime.trim()) {
+        b.classList.add("on");
+      }
+    });
+  }
+
+  renderTotals();
 }
 
 /* ═══ EMBUDO ═══ */
@@ -270,7 +323,8 @@ function openCheckout(){
   localStorage.setItem("soho_draft_code", S.code);
   $("checkout-overlay").classList.remove("hidden");
   document.body.style.overflow = "hidden";
-  renderZones(); renderTimes(); renderSummary();
+  renderZones(); 
+  renderSummary();
   restaurarProgreso();
   goStep(1);
   cargarCupos(S.calendarDate);
@@ -278,88 +332,116 @@ function openCheckout(){
 }
 function closeCheckout(){ $("checkout-overlay").classList.add("hidden"); document.body.style.overflow = "auto"; }
 
-/* ═══ CHECKOUT CON VALIDACIÓN PASO A PASO INMEDIATA ═══ */
-function goStep(n){
-  // Determinar paso actual
+/* ═══ VALIDACIÓN ESTRICTA DE CAMPOS ═══ */
+function validarPaso(paso) {
+  if (paso === 1) {
+    // 1. Logística y Dirección / Retiro
+    if (S.logistics === "envio") {
+      if (!S.zone) {
+        alert("Debes seleccionar la comuna o sector de entrega.");
+        $("zone-chips")?.scrollIntoView({ behavior: "smooth", block: "center" });
+        return false;
+      }
+      const addr = $("address")?.value.trim() || "";
+      if (addr.length < 5) {
+        alert("Debes ingresar la dirección exacta de entrega (calle, número y depto/casa).");
+        $("address")?.focus();
+        return false;
+      }
+    } else if (S.logistics === "retiro") {
+      const pick = $("pickup-name")?.value.trim() || "";
+      if (pick.length < 3) {
+        alert("Debes indicar el nombre completo de la persona que retirará en el taller.");
+        $("pickup-name")?.focus();
+        return false;
+      }
+    }
+
+    // 2. Fecha
+    if (!S.date) {
+      alert("Debes seleccionar una fecha de entrega (Hoy, Mañana o Calendario).");
+      return false;
+    }
+
+    // 3. Bloque Horario (comprobación en memoria y en UI)
+    const activeChip = document.querySelector("#time-chips .chip.on");
+    if (!S.time || !activeChip) {
+      alert("Debes seleccionar obligatoriamente un bloque horario de entrega.");
+      $("time-chips")?.scrollIntoView({ behavior: "smooth", block: "center" });
+      return false;
+    }
+
+    return true;
+  }
+
+  if (paso === 2) {
+    // 1. Quien envía (Comprador)
+    const sender = $("sender-name")?.value.trim() || "";
+    if (sender.length < 2) {
+      alert("Debes ingresar tu nombre (quien realiza el pedido).");
+      $("sender-name")?.focus();
+      return false;
+    }
+
+    // 2. Correo del comprador
+    const email = $("buyer-email")?.value.trim() || "";
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      alert("Debes ingresar un correo electrónico válido para recibir la confirmación y boleta.");
+      $("buyer-email")?.focus();
+      return false;
+    }
+
+    // 3. Teléfono / WhatsApp del comprador (si el campo existe)
+    const buyerPhone = $("buyer-whatsapp")?.value.trim() || "";
+    if ($("buyer-whatsapp") && buyerPhone.replace(/\D/g, "").length < 8) {
+      alert("Debes ingresar tu número de teléfono / WhatsApp de contacto.");
+      $("buyer-whatsapp")?.focus();
+      return false;
+    }
+
+    // 4. Quien recibe (Destinatario)
+    const receiver = $("receiver-name")?.value.trim() || "";
+    if (receiver.length < 2) {
+      alert("Debes ingresar el nombre de la persona que recibe las flores.");
+      $("receiver-name")?.focus();
+      return false;
+    }
+
+    // 5. Teléfono de destino (Receptor)
+    const receiverPhone = $("receiver-phone")?.value.trim() || "";
+    if (receiverPhone.replace(/\D/g, "").length < 8) {
+      alert("Debes ingresar un teléfono de contacto válido para coordinar la entrega.");
+      $("receiver-phone")?.focus();
+      return false;
+    }
+
+    // Mensaje de tarjeta y nota de entrega permanecen como los únicos dos campos opcionales
+
+    window.trackEvent4D("lead_captured", {
+      email, 
+      step_name: "step-buyer-email", 
+      cart_value: flowersSubtotal(),
+      name: sender
+    });
+
+    return true;
+  }
+
+  return true;
+}
+
+function goStep(n) {
   let currentStep = 1;
   if ($("step-2") && !$("step-2").classList.contains("hidden")) currentStep = 2;
   else if ($("step-3") && !$("step-3").classList.contains("hidden")) currentStep = 3;
 
-  // Validación estricta solo cuando el usuario intenta avanzar
+  // Bloqueo estricto al intentar avanzar
   if (n > currentStep) {
-    // ── Validaciones Paso 1: Entrega y Horarios ──
-    if (currentStep === 1 || n === 2) {
-      if (S.logistics === "envio") {
-        if (!S.zone) {
-          alert("Por favor, selecciona el sector o comuna de entrega.");
-          return;
-        }
-        const addr = $("address")?.value.trim() || "";
-        if (!addr) {
-          alert("Por favor, ingresa la calle, número y departamento de entrega.");
-          $("address")?.focus();
-          return;
-        }
-      } else if (S.logistics === "retiro") {
-        const pick = $("pickup-name")?.value.trim() || "";
-        if (!pick) {
-          alert("Por favor, indica el nombre de la persona que retirará en el taller.");
-          $("pickup-name")?.focus();
-          return;
-        }
-      }
-      if (!S.date) {
-        alert("Por favor, selecciona una fecha de entrega.");
-        return;
-      }
-      if (!S.time) {
-        alert("Por favor, selecciona un bloque horario de entrega.");
-        return;
-      }
-    }
-
-    // ── Validaciones Paso 2: Datos de Contacto y Receptor ──
-    if (n === 3) {
-      const sender = $("sender-name")?.value.trim() || "";
-      if (!sender) {
-        alert("Por favor, ingresa tu nombre (quien realiza el pedido).");
-        $("sender-name")?.focus();
-        return;
-      }
-
-      const email = $("buyer-email")?.value.trim() || "";
-      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        alert("Por favor, ingresa un correo electrónico válido para enviarte el comprobante de compra.");
-        $("buyer-email")?.focus();
-        return;
-      }
-
-      const receiver = $("receiver-name")?.value.trim() || "";
-      if (!receiver) {
-        alert("Por favor, ingresa el nombre de la persona que recibe las flores.");
-        $("receiver-name")?.focus();
-        return;
-      }
-
-      const phone = $("receiver-phone")?.value.trim() || "";
-      if (!phone) {
-        alert("Por favor, ingresa un teléfono de contacto para coordinar la entrega.");
-        $("receiver-phone")?.focus();
-        return;
-      }
-
-      // Mensaje de tarjeta y notas de entrega son opcionales
-
-      window.trackEvent4D("lead_captured", {
-        email, 
-        step_name: "step-buyer-email", 
-        cart_value: flowersSubtotal(),
-        name: sender
-      });
-    }
+    if (currentStep === 1 && !validarPaso(1)) return;
+    if (currentStep === 2 && !validarPaso(2)) return;
+    if (n === 3 && (!validarPaso(1) || !validarPaso(2))) return;
   }
 
-  // Cambio de pantalla si pasó las validaciones
   [1, 2, 3].forEach(i => {
     $("step-" + i)?.classList.toggle("hidden", i !== n);
     $("prog-" + i)?.classList.toggle("on", i <= n);
@@ -371,6 +453,7 @@ function goStep(n){
   guardarProgreso();
   window.trackEvent4D("checkout_step", { step: n });
 }
+
 
 function renderSummary(){
   $("cart-summary").innerHTML = cart.map(i => `
@@ -400,10 +483,14 @@ function setZone(id){
   renderTotals(); guardarProgreso();
 }
 function setDate(v){
-  S.date = v; S.express = false;
-  $("date-hoy").classList.toggle("on", v === "hoy");
-  $("date-manana").classList.toggle("on", v === "manana");
-  renderTimes(); guardarProgreso();
+  S.date = v; 
+  S.express = false;
+  S.time = ""; // Resetear horario para obligar a elegir uno en la nueva fecha
+  localStorage.removeItem("soho_time");
+  $("date-hoy")?.classList.toggle("on", v === "hoy");
+  $("date-manana")?.classList.toggle("on", v === "manana");
+  renderTimes(); 
+  guardarProgreso();
 }
 
 /* ═══ CALENDARIO CON CUPOS ═══ */
@@ -458,10 +545,16 @@ function renderCalendar(){
   }
 }
 function changeMonth(dir){ S.calendarDate.setMonth(S.calendarDate.getMonth() + dir); cargarCupos(S.calendarDate); renderCalendar(); }
+
 function pickCalendarDay(dateStr){
-  S.date = dateStr; S.express = false;
-  ["date-hoy","date-manana"].forEach(id => $(id).classList.remove("on"));
-  closeCalendar(); renderTimes(); guardarProgreso();
+  S.date = dateStr; 
+  S.express = false;
+  S.time = ""; // Resetear horario para obligar a elegir uno en el nuevo día
+  localStorage.removeItem("soho_time");
+  ["date-hoy","date-manana"].forEach(id => $(id)?.classList.remove("on"));
+  closeCalendar(); 
+  renderTimes(); 
+  guardarProgreso();
 }
 
 /* ═══ HORARIOS INTELIGENTES + EXPRESS ═══ */
@@ -572,16 +665,13 @@ function orderPayload(){
 
 /* ═══ PAGO 1: WEBPAY vía FLOW ═══ */
 async function payFlow(){
-  const email = $("buyer-email").value.trim();
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return alert("Necesitamos tu correo para la confirmación.");
-  if (S.logistics === "envio" && (!S.zone || !$("address").value.trim())) return alert("Falta zona o dirección de entrega.");
-  if (!S.time) return alert("Elige un bloque horario.");
-  
+  if (!validarPaso(1)) { goStep(1); return; }
+  if (!validarPaso(2)) { goStep(2); return; }
+
   window.trackEvent4D("payment_initiated", { method:"FlowWebpay", cart_value: flowersSubtotal(), order_code: S.code });
   
   try {
     const payload = orderPayload();
-    // Aplanar campos requeridos por el Worker
     const flowBody = {
       ...payload.metadata,
       total_price: payload.totalCLP,
@@ -606,26 +696,21 @@ async function payFlow(){
   }
 }
 
-/* ═══ PAGO 2: PAYPAL (internacional) ═══ */
-let paypalLoaded = false;
-let paypalRendered = false;
-
+/* ═══ PAGO 2: PAYPAL ═══ */
 function payPayPal(){
-  const email = $("buyer-email").value.trim();
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return alert("Necesitamos tu correo para la confirmación.");
-  
+  if (!validarPaso(1)) { goStep(1); return; }
+  if (!validarPaso(2)) { goStep(2); return; }
+
   window.trackEvent4D("payment_initiated", { method:"PayPal", cart_value: flowersSubtotal(), order_code: S.code });
 
   const container = $("paypal-container");
   if (!container) return;
 
-  // Si ya se dibujaron los botones, no volver a renderizar
   if (paypalRendered && container.children.length > 0) {
     container.scrollIntoView({ behavior: "smooth" });
     return;
   }
 
-  // Limpiar cualquier intento previo
   container.innerHTML = "";
 
   const run = () => {
@@ -659,8 +744,6 @@ function payPayPal(){
     }).render("#paypal-container");
 
     paypalRendered = true;
-
-    // Ocultar el botón original para evitar clics repetidos
     const btnPaypalTrigger = document.querySelector("button[onclick='payPayPal()']");
     if (btnPaypalTrigger) btnPaypalTrigger.style.display = "none";
   };
@@ -732,6 +815,12 @@ document.addEventListener("click", function(e){
 
 /* ═══ INIT (a prueba de páginas sin catálogo: gracias, seguimiento, etc.) ═══ */
 document.addEventListener("DOMContentLoaded", () => {
+   // Auto-guardado inmediato en cada pulsación o cambio dentro del checkout
+  const chkOverlay = $("checkout-overlay");
+  if (chkOverlay) {
+    chkOverlay.addEventListener("input", guardarProgreso);
+    chkOverlay.addEventListener("change", guardarProgreso);
+  }
   if ($("product-grid")) renderGrid();
   updateCartUI();
   cargarCupos(S.calendarDate);
