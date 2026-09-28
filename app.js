@@ -15,7 +15,7 @@ const CONFIG = {
     track:         "https://api.sohoflowers.cl/api/track",
     cupos:         "https://api.sohoflowers.cl/cupos"
   },
-  paypalClientId: "AWd4fnTIy3jVaJAYvFpHJ6N7-ZlQYhQ6F8y400s6", // Pega aquí tu Client ID de PayPal
+  paypalClientId: "BAA-hxfOCTSXES_tu6wf7VYtunGXQ_mqxd13k29F0Y64v9BnXBZX88yykOwR3Piv7kqBdDDKhZHSZ82iTA", // Pega aquí tu Client ID de PayPal
   freeShipThreshold: 69990,
   freeShipBonus: 7250,
   expressMultiplier: 1.5,
