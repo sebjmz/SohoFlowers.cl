@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Seguimiento en vivo | Soho Flowers</title>
+<meta name="description" content="Sigue tu arreglo Soho Flowers en tiempo real: confirmación, foto del taller, despacho y entrega con evidencia fotográfica.">
+<meta name="robots" content="noindex">
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500;1,600&family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script>
+tailwind.config = { theme: { extend: {
+  colors: { ink:'#0E1512', gold:'#C5A059', goldhero:'#A9803E', goldink:'#8F6B2E', ivory:'#FBFAF8', smoke:'#6E6E68' },
+  fontFamily: { serif:['"Cormorant Garamond"','serif'], sans:['Manrope','system-ui','sans-serif'] }
+}}};
+</script>
+<style>
+  .display{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:500;letter-spacing:-.01em}
+  .micro{font-size:9px;letter-spacing:.22em;text-transform:uppercase;font-weight:700}
+  .btn-gold{background:#C5A059;color:#0E1512;transition:.25s}
+  .btn-gold:hover{background:#0E1512;color:#C5A059}
+  .btn-line{border:1px solid rgba(14,21,18,.25);transition:.25s}
+  .btn-line:hover{border-color:#C5A059;color:#C5A059}
+  .fade-up{opacity:0;transform:translateY(14px);animation:fu .7s cubic-bezier(.16,1,.3,1) forwards}
+  @keyframes fu{to{opacity:1;transform:none}}
+  .live-dot{width:8px;height:8px;border-radius:9999px;background:#C5A059;position:relative}
+  .live-dot::after{content:"";position:absolute;inset:-4px;border-radius:9999px;border:1px solid #C5A059;animation:pulse 1.6s ease-out infinite}
+  @keyframes pulse{0%{transform:scale(.6);opacity:1}100%{transform:scale(1.4);opacity:0}}
+  input{outline:none}
+  input:focus{border-color:#C5A059!important}
+</style>
+</head>
+<body class="bg-ivory text-ink font-sans antialiased min-h-screen flex flex-col">
+
+<!-- ══════════ HEADER ══════════ -->
+<header class="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between w-full">
+  <a href="/" class="flex items-center" aria-label="Soho Flowers - Ir al inicio">
+    <img src="img/soho-flowers-logo-negro-fondo-transparente.webp" alt="Soho Flowers" class="h-8 md:h-10 mix-blend-multiply">
+  </a>
+  <a href="/" class="micro opacity-60 hover:opacity-100">← Volver a la tienda</a>
+</header>
+
+<!-- ══════════ BUSCADOR ══════════ -->
+<main class="flex-1 w-full max-w-2xl mx-auto px-4 py-10 md:py-14">
+  <div class="text-center">
+    <p class="micro text-goldink">Seguimiento en vivo</p>
+    <h1 class="display text-5xl md:text-6xl mt-2">Tu pedido viaja seguro.</h1>
+    <p class="text-sm opacity-60 mt-3 max-w-md mx-auto">Ingresa el código de tu pedido (lo encuentras en tu correo de confirmación) y mira cada paso, con foto del arreglo antes de salir.</p>
+  </div>
+
+  <div class="flex gap-2 mt-8">
+    <input id="code" placeholder="SF-…" class="flex-1 border border-ink/15 rounded-full px-6 py-4 text-sm bg-white" onkeydown="if(event.key==='Enter')buscar()">
+    <button onclick="buscar()" class="btn-gold micro px-7 py-4 rounded-full whitespace-nowrap">Buscar pedido</button>
+  </div>
+  <p id="error" class="micro text-center mt-4 text-goldink opacity-0 transition-opacity duration-300">No dimos con este pedido. Revisa el código o tu correo de confirmación.</p>
+
+  <!-- ══════════ CARGANDO ══════════ -->
+  <div id="loading" class="hidden text-center mt-12">
+    <p class="display text-3xl opacity-50">Consultando el atelier…</p>
+  </div>
+
+  <!-- ══════════ PANEL DEL PEDIDO ══════════ -->
+  <div id="panel" class="hidden mt-10 space-y-6">
+
+    <!-- Cabecera del pedido -->
+    <div class="border border-ink/10 rounded-2xl bg-white px-6 py-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4 fade-up">
+      <div>
+        <p class="micro opacity-50">Código de pedido</p>
+        <p id="t-code" class="display text-3xl text-goldink">SF-…</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <span class="live-dot" aria-hidden="true"></span>
+        <span class="micro opacity-60">En vivo · se actualiza solo</span>
+        <span id="t-status" class="micro px-4 py-2 rounded-full bg-ink/5 text-ink/70">—</span>
+      </div>
+    </div>
+
+    <!-- Coordenadas de entrega -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 fade-up" style="animation-delay:.1s">
+      <div class="border border-ink/10 rounded-2xl bg-white px-6 py-4">
+        <p class="micro opacity-50">Entrega programada</p>
+        <p id="t-slot" class="text-sm font-bold mt-1">—</p>
+      </div>
+      <div class="border border-ink/10 rounded-2xl bg-white px-6 py-4">
+        <p class="micro opacity-50">Recibe</p>
+        <p id="t-receiver" class="text-sm font-bold mt-1">—</p>
+      </div>
+    </div>
+
+    <!-- Línea de tiempo -->
+    <div id="steps" class="border border-ink/10 rounded-2xl bg-white px-6 py-6 fade-up" style="animation-delay:.2s"></div>
+
+    <!-- Evidencia fotográfica -->
+    <div id="photo-confirm-box" class="hidden border border-ink/10 rounded-2xl bg-white overflow-hidden fade-up">
+      <div class="px-6 pt-5 flex items-center justify-between">
+        <p class="micro text-goldink">Foto del taller · antes de salir</p>
+        <span class="micro opacity-40">Garantía Soho</span>
+      </div>
+      <img id="photo-confirm" class="w-full max-h-[26rem] object-cover mt-3" alt="Tu arreglo antes de salir a reparto">
+    </div>
+    <div id="photo-entrega-box" class="hidden border border-ink/10 rounded-2xl bg-white overflow-hidden fade-up">
+      <div class="px-6 pt-5 flex items-center justify-between">
+        <p class="micro text-goldink">Evidencia de entrega</p>
+        <span class="micro opacity-40">Recibido conforme</span>
+      </div>
+      <img id="photo-entrega" class="w-full max-h-[26rem] object-cover mt-3" alt="Evidencia de entrega">
+    </div>
+
+    <!-- Reseña (solo al entregar) -->
+    <div id="review-box" class="hidden text-center border border-gold/40 rounded-2xl bg-white px-6 py-8 fade-up">
+      <p class="display text-3xl">Llegó impecable.</p>
+      <p class="text-xs opacity-60 mt-2 max-w-sm mx-auto">Si tu experiencia fue así de simple, tu reseña nos ayuda a florecer y a otras personas a confiar en nosotros.</p>
+      <a id="review-link" href="#" target="_blank" rel="noopener" class="inline-block mt-4 text-3xl text-gold tracking-[.3em] hover:scale-110 transition" aria-label="Dejar reseña de 5 estrellas">★★★★★</a>
+      <p class="micro opacity-40 mt-2">Dejar mi opinión en Google</p>
+    </div>
+
+    <!-- Acciones -->
+    <div class="flex flex-col md:flex-row gap-3 justify-center fade-up" style="animation-delay:.3s">
+      <a id="wa-link" href="#" target="_blank" class="btn-line micro px-8 py-4 rounded-full text-center">Coordinar por WhatsApp</a>
+      <button onclick="otroPedido()" class="btn-line micro px-8 py-4 rounded-full">Revisar otro pedido 🔍</button>
+    </div>
+  </div>
+</main>
+
+<!-- ══════════ FOOTER ══════════ -->
+<footer class="bg-ink text-ivory/60 py-6">
+  <div class="max-w-4xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-3 micro">
+    <img src="img/soho-flowers-logo-negro-fondo-transparente.webp" alt="Soho Flowers" class="h-7 brightness-0 invert opacity-90">
+    <span>Viña del Mar · Región de Valparaíso</span>
+  </div>
+</footer>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   SEGUIMIENTO SOHO · en vivo contra el worker
+   ═══════════════════════════════════════════════════════════════ */
+const API = "https://soho-flowers.sebjmz.workers.dev";
+const REVIEW_URL = "https://g.page/r/TU-CODIGO-GOOGLE/review"; // ← reemplaza por tu link real de reseñas
+const WHATSAPP = "56994783520";
+
+const $ = id => document.getElementById(id);
+const sid = sessionStorage.getItem("soho_sid") || ("sid_" + Date.now() + "_" + Math.floor(Math.random()*1e5));
+sessionStorage.setItem("soho_sid", sid);
+function track(name, data={}){
+  fetch(API + "/api/track", { method:"POST", headers:{"Content-Type":"application/json"}, keepalive:true,
+    body: JSON.stringify({ session_id:sid, event_name:name, event_data:data, url:"/seguimiento.html" }) }).catch(()=>{});
+}
+track("page_view");
+
+let pollTimer = null;
+let currentCode = "";
+
+/* Autocompleta desde la URL (?code= o ?pedido=) */
+const params = new URLSearchParams(location.search);
+const urlCode = params.get("code") || params.get("pedido") || "";
+if (urlCode){ $("code").value = urlCode; }
+
+async function buscar(silent=false){
+  const code = $("code").value.trim();
+  if (!code) return;
+  currentCode = code;
+  if (!silent){
+    $("error").classList.add("opacity-0");
+    $("panel").classList.add("hidden");
+    $("loading").classList.remove("hidden");
+  }
+  try {
+    const r = await fetch(`${API}/api/order?code=${encodeURIComponent(code)}`);
+    if (!r.ok) throw new Error("nf");
+    const o = await r.json();
+    $("loading").classList.add("hidden");
+    render(o);
+    if (!silent) track("tracking_viewed", { code, status: o.status });
+  } catch(e){
+    $("loading").classList.add("hidden");
+    if (!silent){
+      $("panel").classList.add("hidden");
+      $("error").classList.remove("opacity-0");
+      track("tracking_not_found", { code });
+    }
+  }
+}
+
+function render(o){
+  $("panel").classList.remove("hidden");
+  $("t-code").innerText = o.code;
+  $("t-slot").innerText = `${o.date || "—"} · ${o.slot || "—"}`;
+  $("t-receiver").innerText = o.receiver || "—";
+
+  const pill = $("t-status");
+  const labels = { confirmado:"En el taller", transito:"En camino", entregado:"Entregado" };
+  pill.innerText = labels[o.status] || o.status;
+  pill.className = "micro px-4 py-2 rounded-full " +
+    (o.status === "entregado" ? "bg-gold text-ink" :
+     o.status === "transito"  ? "bg-gold/15 text-goldink" : "bg-ink/5 text-ink/70");
+
+  /* Línea de tiempo */
+  const orden = ["confirmado","transito","entregado"];
+  const idx = orden.indexOf(o.status);
+  const datos = [
+    { t:"Manos a la obra en el taller", d:"Recibimos tu pedido y reservamos tu cupo. Estamos eligiendo las mejores flores para tu diseño.", k:["confirmado_at","pagado_at","creado_at"] },
+    { t:"Flores en camino", d:"Tu arreglo salió a reparto con seguimiento en vivo hasta la puerta.", k:["transito_at"] },
+    { t:"Entregado con éxito", d:"Llegamos a destino. Un nuevo momento especial, compartido.", k:["entregado_at"] }
+  ];
+  $("steps").innerHTML = datos.map((s,i) => {
+    const ts = s.k.map(k => o.timeline && o.timeline[k]).find(v => v);
+    const done = i < idx, current = i === idx;
+    return `
+    <div class="flex gap-4">
+      <div class="flex flex-col items-center">
+        <div class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold
+          ${done ? "bg-gold text-ink" : current ? "border-2 border-gold text-goldink" : "border border-ink/15 opacity-40"}">${done ? "✓" : i+1}</div>
+        ${i < 2 ? `<div class="w-px flex-1 my-1 ${done ? "bg-gold" : "bg-ink/10"}"></div>` : ""}
+      </div>
+      <div class="pb-8 flex-1">
+        <p class="display text-2xl ${current || done ? "" : "opacity-40"}">${s.t}</p>
+        <p class="text-xs opacity-60 mt-1">${s.d}</p>
+        ${ts ? `<p class="micro mt-2 text-goldink">${new Date(ts).toLocaleString("es-CL",{dateStyle:"medium",timeStyle:"short"})}</p>` : ""}
+      </div>
+    </div>`;
+  }).join("");
+
+  /* Evidencia fotográfica */
+  if (o.photos && o.photos.confirm){
+    $("photo-confirm-box").classList.remove("hidden");
+    $("photo-confirm").src = API + o.photos.confirm;
+  }
+  if (o.photos && o.photos.entrega){
+    $("photo-entrega-box").classList.remove("hidden");
+    $("photo-entrega").src = API + o.photos.entrega;
+  }
+
+  /* Reseña solo al entregar */
+  if (o.status === "entregado"){
+    $("review-box").classList.remove("hidden");
+    $("review-link").href = REVIEW_URL;
+  } else {
+    $("review-box").classList.add("hidden");
+  }
+
+  /* WhatsApp con contexto */
+  $("wa-link").href = `https://wa.me/${WHATSAPP}?text=` + encodeURIComponent(`Hola, sigo mi pedido ${o.code} (estado: ${labels[o.status] || o.status}) y quería consultar:`);
+
+  /* Polling en vivo: se detiene al entregar */
+  if (pollTimer) clearInterval(pollTimer);
+  if (o.status !== "entregado"){
+    pollTimer = setInterval(() => buscar(true), 45000);
+  }
+}
+
+function otroPedido(){
+  if (pollTimer) clearInterval(pollTimer);
+  $("code").value = "";
+  $("panel").classList.add("hidden");
+  $("photo-confirm-box").classList.add("hidden");
+  $("photo-entrega-box").classList.add("hidden");
+  $("review-box").classList.add("hidden");
+  $("code").focus();
+}
+
+/* Arranque: si venía con código desde gracias.html o el correo, busca solo */
+document.addEventListener("DOMContentLoaded", () => { if (urlCode) buscar(); });
+</script>
+</body>
+</html>
