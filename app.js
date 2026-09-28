@@ -292,24 +292,24 @@ function updateCartUI(){
     return;
   }
   cont.innerHTML = cart.map(item => `
-    <div class="flex gap-4 items-center border border-ink/5 rounded-2xl bg-white p-3">
-      <div class="w-16 h-16 md:w-20 md:h-20 flex-shrink-0 rounded-xl overflow-hidden bg-ivory relative flex items-center justify-center border border-ink/5">
-        <span class="display text-lg text-ink/10 absolute">SF</span>
-        <img src="${item.img}" onerror="this.style.opacity='0'" class="w-full h-full object-cover relative z-10" alt="${item.name}">
-      </div>
-      <div class="flex-1 min-w-0">
-        <h4 class="display text-xl leading-tight truncate">${item.name}</h4>
-        <p class="text-xs font-bold mt-0.5">${clp(item.price)}</p>
-        <div class="flex items-center gap-4 mt-2">
-          <div class="flex items-center gap-1 border border-ink/10 rounded-full px-2 py-0.5">
-            <button onclick="updateQty(${item.id},-1)" class="px-1 opacity-60 hover:opacity-100" aria-label="Disminuir">−</button>
-            <span class="text-xs font-bold w-4 text-center">${item.qty}</span>
-            <button onclick="updateQty(${item.id},1)" class="px-1 opacity-60 hover:opacity-100" aria-label="Aumentar">+</button>
-          </div>
-          <button onclick="removeFromCart(${item.id})" class="micro opacity-40 hover:opacity-100">Eliminar</button>
+  <div class="flex gap-6 items-center">
+    <div class="w-24 h-32 flex-shrink-0 bg-ink/5 relative overflow-hidden">
+      <img src="${item.img}" class="w-full h-full object-cover relative z-10" alt="${item.name}">
+    </div>
+    <div class="flex-1 min-w-0">
+      <h4 class="display text-2xl leading-none truncate text-ink">${item.name}</h4>
+      <p class="text-sm font-light mt-2 opacity-70">${clp(item.price)}</p>
+      <div class="flex items-center gap-6 mt-4">
+        <div class="flex items-center gap-4 micro opacity-60">
+          <button onclick="updateQty(${item.id},-1)" class="hover:text-ink transition">− </button>
+          <span>${item.qty}</span>
+          <button onclick="updateQty(${item.id},1)" class="hover:text-ink transition"> +</button>
         </div>
+        <button onclick="removeFromCart(${item.id})" class="micro opacity-30 hover:opacity-100 transition">Quitar</button>
       </div>
-    </div>`).join("");
+    </div>
+  </div>`).join("");
+   
   $("cart-total").innerText = clp(flowersSubtotal());
 }
 function procederCheckout(){
