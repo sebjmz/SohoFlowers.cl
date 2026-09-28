@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Control | Soho Flowers</title>
+<meta name="robots" content="noindex">
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500;1,600&family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script>
+tailwind.config = { theme: { extend: {
+  colors: { ink:'#0E1512', gold:'#C5A059', goldhero:'#A9803E', goldink:'#8F6B2E', ivory:'#FBFAF8', smoke:'#6E6E68' },
+  fontFamily: { serif:['"Cormorant Garamond"','serif'], sans:['Manrope','system-ui','sans-serif'] }
+}}};
+</script>
+<style>
+  html,body{background:#FBFAF8}
+  .display{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:500;letter-spacing:-.01em}
+  .micro{font-size:9px;letter-spacing:.22em;text-transform:uppercase;font-weight:700}
+  .btn-gold{background:#C5A059;color:#0E1512;transition:.25s}
+  .btn-gold:hover:not(:disabled){background:#0E1512;color:#C5A059}
+  .btn-gold:disabled{opacity:.5;cursor:not-allowed}
+  .btn-line{border:1px solid rgba(14,21,18,.25);transition:.25s}
+  .btn-line:hover{border-color:#C5A059;color:#C5A059}
+  input,select{outline:none}
+  input:focus,select:focus{border-color:#C5A059!important}
+  .fade-in{animation:fi .4s ease forwards}
+  @keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .status-pill{font-size:9px;letter-spacing:.18em;text-transform:uppercase;font-weight:700;padding:3px 10px;border-radius:9999px}
+  .status-confirmado{background:#0E1512;color:#FBFAF8}
+  .status-transito{background:#C5A059;color:#0E1512}
+  .status-entregado{background:#E8F3E8;color:#2F6B2F}
+  .status-pendiente{background:rgba(14,21,18,.08);color:rgba(14,21,18,.6)}
+</style>
+</head>
+<body class="font-sans antialiased text-ink min-h-screen">
+
+<!-- ══════════ LOGIN ══════════ -->
+<div id="login" class="fixed inset-0 z-50 bg-ink flex items-center justify-center px-4">
+  <div class="text-center w-full max-w-xs">
+    <p class="display text-4xl text-ivory">Soho <span class="text-gold">Control</span></p>
+    <p class="micro text-ivory/40 mt-2">Panel de operaciones</p>
+    <input id="pass" type="password" placeholder="Clave de operación" class="w-full mt-8 bg-white/10 border border-white/20 rounded-full px-5 py-3 text-sm text-ivory placeholder:text-ivory/30 outline-none focus:border-gold" onkeydown="if(event.key==='Enter')entrar()">
+    <button onclick="entrar()" id="btn-login" class="w-full mt-3 bg-gold text-ink micro py-3 rounded-full hover:bg-ivory transition">Acceder</button>
+    <p id="login-error" class="micro text-gold mt-3 opacity-0">Clave incorrecta</p>
+  </div>
+</div>
+
+<!-- ══════════ HEADER ══════════ -->
+<header class="bg-ink text-ivory">
+  <div class="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <img src="img/soho-flowers-logo-negro-fondo-transparente.webp" alt="Soho Flowers" class="h-8 brightness-0 invert">
+      <span class="micro text-gold hidden md:block">Control</span>
+    </div>
+    <button onclick="salir()" class="micro opacity-60 hover:opacity-100">Salir</button>
+  </div>
+  <div class="max-w-6xl mx-auto px-4 flex gap-6 micro pb-3">
+    <button onclick="tab('logistica')" id="tab-logistica" class="text-gold border-b border-gold pb-1">🚚 Logística & Tracking</button>
+    <button onclick="tab('pedidos')" id="tab-pedidos" class="opacity-60 pb-1 hover:opacity-100">📥 Pedidos del día</button>
+  </div>
+</header>
+
+<!-- ══════════ MAIN ══════════ -->
+<main class="max-w-6xl mx-auto px-4 py-8 grid md:grid-cols-2 gap-8">
+
+  <!-- LISTA DE PEDIDOS -->
+  <section id="view-pedidos">
+    <div class="flex items-center justify-between mb-1">
+      <h2 class="display text-3xl">Pedidos de hoy</h2>
+      <button onclick="cargarPedidos()" class="micro text-goldink underline underline-offset-4">Refrescar</button>
+    </div>
+    <p class="text-xs opacity-50 mb-4" id="fecha-actual"></p>
+    <div id="orders" class="space-y-3">
+      <p class="text-center opacity-40 py-10 text-sm">Cargando pedidos…</p>
+    </div>
+  </section>
+
+  <!-- PANEL DE LOGÍSTICA -->
+  <section id="view-logistica" class="bg-white border border-ink/10 rounded-2xl p-6 h-fit sticky top-4">
+    <h2 class="display text-3xl">Actualizar seguimiento</h2>
+    <p class="text-xs opacity-50 mt-1">Cambia el estado, sube evidencia fotográfica y notifica al cliente por correo.</p>
+
+    <label class="micro block mt-5">Código de pedido</label>
+    <input id="f-code" placeholder="SF-…" class="w-full mt-1 border border-ink/15 rounded-xl px-4 py-3 text-sm bg-ivory outline-none focus:border-gold">
+
+    <label class="micro block mt-4">Estado del envío</label>
+    <select id="f-status" class="w-full mt-1 border border-ink/15 rounded-xl px-4 py-3 text-sm bg-ivory outline-none focus:border-gold">
+      <option value="confirmado">🌸 Confirmado (en taller)</option>
+      <option value="transito">🚚 En tránsito (en camino)</option>
+      <option value="entregado">✅ Entregado</option>
+    </select>
+
+    <label class="micro block mt-4">Evidencia fotográfica (opcional)</label>
+    <input id="f-photo" type="file" accept="image/*" class="w-full mt-1 text-sm">
+    <p class="text-[10px] opacity-40 mt-1">Se comprime automáticamente a máximo 1000 px · formato JPEG 72%.</p>
+    <img id="preview" class="hidden mt-3 rounded-xl max-h-56 w-full object-cover border border-ink/10">
+
+    <label class="flex items-center gap-2 mt-4 text-xs cursor-pointer select-none">
+      <input id="f-notify" type="checkbox" checked class="accent-[#C5A059] w-4 h-4">
+      <span>Notificar al cliente por correo (Brevo) con la foto</span>
+    </label>
+
+    <button onclick="guardar()" id="btn-save" class="w-full mt-6 bg-ink text-ivory micro py-4 rounded-full hover:bg-gold hover:text-ink transition">Guardar y notificar</button>
+    <p id="msg" class="micro text-center mt-3 text-goldink opacity-0 transition-opacity duration-300"></p>
+  </section>
+</main>
+
+<footer class="bg-ink text-ivory/40 py-6 mt-10">
+  <div class="max-w-6xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-3 micro">
+    <img src="img/soho-flowers-logo-negro-fondo-transparente.webp" alt="Soho Flowers" class="h-7 brightness-0 invert opacity-90">
+    <span>Panel interno · Soho Flowers · Viña del Mar</span>
+  </div>
+</footer>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   SOHO CONTROL · Panel de operaciones
+   Consume: soho-flowers.sebjmz.workers.dev
+   ═══════════════════════════════════════════════════════════════ */
+const API = "https://soho-flowers.sebjmz.workers.dev";
+const $ = id => document.getElementById(id);
+const tok = () => sessionStorage.getItem("soho_admin");
+const hoy = () => {
+  const d = new Date(new Date().toLocaleString("en-US",{timeZone:"America/Santiago"}));
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+};
+let photoData = null;
+
+/* ── Login ── */
+async function entrar(){
+  $("login-error").classList.add("opacity-0");
+  $("btn-login").innerText = "VERIFICANDO…";
+  $("btn-login").disabled = true;
+  try {
+    const r = await fetch(API + "/api/admin/ping", { headers:{ Authorization:"Bearer " + $("pass").value } });
+    if (r.ok){
+      sessionStorage.setItem("soho_admin", $("pass").value);
+      $("login").remove();
+      iniciar();
+    } else {
+      $("login-error").classList.remove("opacity-0");
+    }
+  } catch(e){
+    $("login-error").innerText = "Sin conexión con el servidor";
+    $("login-error").classList.remove("opacity-0");
+  }
+  $("btn-login").innerText = "ACCEDER";
+  $("btn-login").disabled = false;
+}
+function salir(){ sessionStorage.removeItem("soho_admin"); location.reload(); }
+function iniciar(){
+  if (!tok()) return;
+  $("fecha-actual").innerText = new Date().toLocaleDateString("es-CL",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+  cargarPedidos();
+}
+if (tok()){ $("login").remove(); iniciar(); }
+
+/* ── Tabs ── */
+function tab(t){
+  $("tab-logistica").className = t==="logistica" ? "text-gold border-b border-gold pb-1" : "opacity-60 pb-1 hover:opacity-100";
+  $("tab-pedidos").className   = t==="pedidos"   ? "text-gold border-b border-gold pb-1" : "opacity-60 pb-1 hover:opacity-100";
+  $("view-logistica").classList.toggle("hidden", t!=="logistica");
+  $("view-pedidos").classList.toggle("hidden", t!=="pedidos");
+}
+
+/* ── Cargar pedidos ── */
+async function cargarPedidos(){
+  const cont = $("orders");
+  cont.innerHTML = `<p class="text-center opacity-40 py-10 text-sm">Cargando pedidos…</p>`;
+  try {
+    const r = await fetch(`${API}/api/admin/orders?dia=${hoy()}`, { headers:{ Authorization:"Bearer "+tok() } });
+    if (r.status === 401){ salir(); return; }
+    const list = await r.json();
+    if (!list.length){
+      cont.innerHTML = `<p class="micro opacity-40 text-center py-10">Sin pedidos registrados hoy.</p>`;
+      return;
+    }
+    cont.innerHTML = list.map(o => {
+      const statusClass = "status-" + (o.status || "pendiente");
+      const statusLabel = { confirmado:"En taller", transito:"En camino", entregado:"Entregado", pendiente:"Pendiente" }[o.status] || o.status;
+      const logisticsFirst = (o.logistics || "").split("\n")[0];
+      return `
+      <button onclick="usar('${o.code}','${o.status || 'confirmado'}')" class="w-full text-left border border-ink/10 rounded-2xl px-5 py-4 bg-white hover:border-gold transition fade-in">
+        <div class="flex justify-between items-center gap-3">
+          <span class="display text-xl">${o.code}</span>
+          <span class="status-pill ${statusClass}">${statusLabel}</span>
+        </div>
+        <p class="text-xs opacity-60 mt-1"><b>${o.receiver || "—"}</b> · ${o.date || "—"} · ${o.slot || "—"}</p>
+        <p class="text-[10px] opacity-40 mt-0.5 line-clamp-1">${logisticsFirst}</p>
+        ${o.email ? `<p class="text-[10px] opacity-40 mt-0.5">${o.email}</p>` : ""}
+      </button>`;
+    }).join("");
+  } catch(e){
+    cont.innerHTML = `<p class="micro text-goldink text-center py-10">Error al cargar pedidos. Verifica tu conexión.</p>`;
+  }
+}
+function usar(code, status){
+  $("f-code").value = code;
+  $("f-status").value = status;
+  tab("logistica");
+  window.scrollTo({ top: 0, behavior:"smooth" });
+}
+
+/* ── Compresión de foto (canvas) ── */
+$("f-photo").addEventListener("change", e => {
+  const f = e.target.files[0];
+  if (!f){ photoData = null; $("preview").classList.add("hidden"); return; }
+  const rd = new FileReader();
+  rd.onload = ev => {
+    const img = new Image();
+    img.onload = () => {
+      const maxDim = 1000;
+      const sc = Math.min(1, maxDim / Math.max(img.width, img.height));
+      const c = document.createElement("canvas");
+      c.width = img.width * sc;
+      c.height = img.height * sc;
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      photoData = c.toDataURL("image/jpeg", 0.72);
+      $("preview").src = photoData;
+      $("preview").classList.remove("hidden");
+    };
+    img.src = ev.target.result;
+  };
+  rd.readAsDataURL(f);
+});
+
+/* ── Guardar + notificar ── */
+async function guardar(){
+  const code = $("f-code").value.trim();
+  if (!code){ alert("Ingresa el código del pedido."); return; }
+  const btn = $("btn-save");
+  btn.disabled = true;
+  btn.innerText = "GUARDANDO…";
+  $("msg").classList.add("opacity-0");
+
+  const stage = $("f-status").value === "entregado" ? "entrega" : "confirm";
+  try {
+    const r = await fetch(API + "/api/admin/update", {
+      method:"POST",
+      headers:{ Authorization:"Bearer "+tok(), "Content-Type":"application/json" },
+      body: JSON.stringify({
+        code,
+        status: $("f-status").value,
+        photo: photoData,
+        stage,
+        notify: $("f-notify").checked
+      })
+    });
+    if (r.status === 401){ salir(); return; }
+    if (r.ok){
+      $("msg").innerText = "✓ Guardado" + ($("f-notify").checked ? " y cliente notificado por correo" : "");
+      $("msg").classList.remove("opacity-0");
+      // Reset form
+      photoData = null;
+      $("preview").classList.add("hidden");
+      $("f-photo").value = "";
+      cargarPedidos();
+    } else {
+      throw new Error("save_failed");
+    }
+  } catch(e){
+    $("msg").innerText = "✗ Error al guardar. Revisa tu conexión.";
+    $("msg").classList.remove("opacity-0");
+  }
+  btn.disabled = false;
+  btn.innerText = "Guardar y notificar";
+}
+
+/* ── Auto-refresh cada 30s ── */
+setInterval(() => { if (tok() && !$("view-pedidos").classList.contains("hidden")) cargarPedidos(); }, 30000);
+</script>
+</body>
+</html>
