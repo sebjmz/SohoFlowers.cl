@@ -167,14 +167,14 @@ tailwind.config = { theme: { extend: {
       <p class="text-xs opacity-60 mt-3">Tu regalo por tomarte el tiempo:</p>
       <p class="display text-4xl text-goldink mt-2">SOHO10</p>
       <p class="micro opacity-50 mt-1">10% de descuento en tu próximo pedido</p>
-      <a id="google-review-link" href="https://g.page/r/TU-CODIGO-GOOGLE/review" target="_blank" class="btn-line micro px-6 py-3 rounded-full inline-block mt-5">Publicar también en Google</a>
+      <a id="google-review-link" href="https://www.google.com/search?q=Soho+Flowers+Vi%C3%B1a+del+Mar+rese%C3%B1as" target="_blank" rel="noopener" class="btn-line micro px-6 py-3 rounded-full inline-block mt-5">Publicar también en Google</a>
     </div>
   </div>
 </div>
 
 <script>
 /* ═══ CONFIG + TRACKER 4D (independiente de app.js) ═══ */
-const API = "https://soho-flowers.sebjmz.workers.dev";
+const API = "https://api.sohoflowers.cl";
 const sid = sessionStorage.getItem("soho_sid") || ("sid_" + Date.now() + "_" + Math.floor(Math.random()*1e5));
 sessionStorage.setItem("soho_sid", sid);
 function track(name, data={}){
@@ -184,8 +184,8 @@ function track(name, data={}){
 track("page_view");
 
 const $ = id => document.getElementById(id);
-const ORDER = ["confirmado","transito","entregado"];
-const LABELS = ["Confirmado","En camino","Entregado"];
+const ORDER = ["recibido","transito","entregado"];
+const LABELS = ["En taller","En camino","Entregado"];
 let currentOrder = null;
 let rating = 0;
 
@@ -197,18 +197,40 @@ async function buscar(){
   $("error-box").classList.add("hidden");
   $("timeline").classList.add("hidden");
   try {
-    const r = await fetch(`${API}/api/order?code=${encodeURIComponent(code)}`);
+    let r = await fetch(`${API}/api/order?code=${encodeURIComponent(code)}`);
+    if (!r.ok) r = await fetch(`${API}/api/tracking?id=${encodeURIComponent(code)}`);
     if (!r.ok) throw 0;
-    const o = await r.json();
-    currentOrder = o;
-    renderOrder(o);
-    track("tracking_viewed", { code:o.code, status:o.status });
+    const raw = await r.json();
+    currentOrder = normalizeOrder(raw, code);
+    renderOrder(currentOrder);
+    track("tracking_viewed", { code: currentOrder.code, status: currentOrder.status });
   } catch(e){
     $("error-box").classList.remove("hidden");
     track("tracking_not_found", { code });
   } finally {
     $("search-loading").classList.add("opacity-0");
   }
+}
+
+function normalizeOrder(o, fallbackCode){
+  let status = o.status || "recibido";
+  if (status === "confirmado" || status === "pendiente") status = "recibido";
+  const photoConfirm = o.photos?.confirm || o.transito_img || "";
+  const photoEntrega = o.photos?.entrega || o.entregado_img || "";
+  return {
+    code: o.code || o.id || fallbackCode,
+    date: o.date || o.fecha_entrega || "—",
+    slot: o.slot || o.horario_entrega || "Por coordinar",
+    receiver: o.receiver || o.receptor || "—",
+    status,
+    photos: { confirm: photoConfirm, entrega: photoEntrega }
+  };
+}
+
+function photoSrc(src){
+  if (!src) return "";
+  if (/^(data:|https?:|blob:)/i.test(src)) return src;
+  return API + (src.startsWith("/") ? src : "/" + src);
 }
 function resetView(){
   currentOrder = null;
@@ -244,7 +266,7 @@ function renderOrder(o){
   if (stage){
     $("photo-box").classList.remove("hidden");
     $("photo-note").classList.add("hidden");
-    $("photo-img").src = API + o.photos[stage];
+    $("photo-img").src = photoSrc(o.photos[stage]);
     $("photo-caption").innerText = stage === "entrega" ? "Entrega comprobada" : "Tu arreglo antes de salir a reparto";
   } else {
     $("photo-box").classList.add("hidden");
@@ -262,9 +284,17 @@ function setRating(n){
   rating = n;
   document.querySelectorAll("#stars-row .star").forEach((s,i) => s.classList.toggle("on", i < n));
 }
-function sendReview(){
+async function sendReview(){
   if (!rating) return alert("Elige una calificación de 1 a 5 estrellas.");
-  track("review_sent", { rating, order_code: currentOrder?.code });
+  const orderId = currentOrder?.code || "";
+  track("review_sent", { rating, order_code: orderId });
+  try {
+    await fetch(API + "/api/public/survey/submit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ order_id: orderId, rating, issues: [], suggestion: "" })
+    });
+  } catch(e) {}
   $("review-form").classList.add("hidden");
   $("review-success").classList.remove("hidden");
 }
