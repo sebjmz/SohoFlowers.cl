@@ -277,22 +277,101 @@ function openCheckout(){
   window.trackEvent4D("begin_checkout", { value: flowersSubtotal(), order_code: S.code });
 }
 function closeCheckout(){ $("checkout-overlay").classList.add("hidden"); document.body.style.overflow = "auto"; }
+
+/* ═══ CHECKOUT CON VALIDACIÓN PASO A PASO INMEDIATA ═══ */
 function goStep(n){
-  if (n === 3){
-    const email = $("buyer-email")?.value.trim() || "";
-    if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+  // Determinar paso actual
+  let currentStep = 1;
+  if ($("step-2") && !$("step-2").classList.contains("hidden")) currentStep = 2;
+  else if ($("step-3") && !$("step-3").classList.contains("hidden")) currentStep = 3;
+
+  // Validación estricta solo cuando el usuario intenta avanzar
+  if (n > currentStep) {
+    // ── Validaciones Paso 1: Entrega y Horarios ──
+    if (currentStep === 1 || n === 2) {
+      if (S.logistics === "envio") {
+        if (!S.zone) {
+          alert("Por favor, selecciona el sector o comuna de entrega.");
+          return;
+        }
+        const addr = $("address")?.value.trim() || "";
+        if (!addr) {
+          alert("Por favor, ingresa la calle, número y departamento de entrega.");
+          $("address")?.focus();
+          return;
+        }
+      } else if (S.logistics === "retiro") {
+        const pick = $("pickup-name")?.value.trim() || "";
+        if (!pick) {
+          alert("Por favor, indica el nombre de la persona que retirará en el taller.");
+          $("pickup-name")?.focus();
+          return;
+        }
+      }
+      if (!S.date) {
+        alert("Por favor, selecciona una fecha de entrega.");
+        return;
+      }
+      if (!S.time) {
+        alert("Por favor, selecciona un bloque horario de entrega.");
+        return;
+      }
+    }
+
+    // ── Validaciones Paso 2: Datos de Contacto y Receptor ──
+    if (n === 3) {
+      const sender = $("sender-name")?.value.trim() || "";
+      if (!sender) {
+        alert("Por favor, ingresa tu nombre (quien realiza el pedido).");
+        $("sender-name")?.focus();
+        return;
+      }
+
+      const email = $("buyer-email")?.value.trim() || "";
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        alert("Por favor, ingresa un correo electrónico válido para enviarte el comprobante de compra.");
+        $("buyer-email")?.focus();
+        return;
+      }
+
+      const receiver = $("receiver-name")?.value.trim() || "";
+      if (!receiver) {
+        alert("Por favor, ingresa el nombre de la persona que recibe las flores.");
+        $("receiver-name")?.focus();
+        return;
+      }
+
+      const phone = $("receiver-phone")?.value.trim() || "";
+      if (!phone) {
+        alert("Por favor, ingresa un teléfono de contacto para coordinar la entrega.");
+        $("receiver-phone")?.focus();
+        return;
+      }
+
+      // Mensaje de tarjeta y notas de entrega son opcionales
+
       window.trackEvent4D("lead_captured", {
-        email, step_name:"step-buyer-email", cart_value: flowersSubtotal(),
-        name: $("sender-name")?.value || ""
+        email, 
+        step_name: "step-buyer-email", 
+        cart_value: flowersSubtotal(),
+        name: sender
       });
     }
   }
-  [1,2,3].forEach(i => { $("step-"+i).classList.toggle("hidden", i !== n); $("prog-"+i).classList.toggle("on", i <= n); });
-  if (n === 2) $("buyer-email").focus();
+
+  // Cambio de pantalla si pasó las validaciones
+  [1, 2, 3].forEach(i => {
+    $("step-" + i)?.classList.toggle("hidden", i !== n);
+    $("prog-" + i)?.classList.toggle("on", i <= n);
+  });
+
+  if (n === 2) $("sender-name")?.focus();
   if (n === 3) renderTotals();
+
   guardarProgreso();
-  window.trackEvent4D("checkout_step", { step:n });
+  window.trackEvent4D("checkout_step", { step: n });
 }
+
 function renderSummary(){
   $("cart-summary").innerHTML = cart.map(i => `
     <div class="flex justify-between items-center border border-ink/10 rounded-xl px-4 py-3 bg-white">
