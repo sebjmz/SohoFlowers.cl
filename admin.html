@@ -451,7 +451,7 @@ async function loadAnalytics() {
 
       aBody.innerHTML = data.abandoned.map(c => `
         <tr class="border-b border-ink/5 last:border-0 hover:bg-white/50 transition">
-          <td class="py-4 px-4 text-xs opacity-60 w-24">${new Date(c.created_at).toLocaleTimeString('es-CL', {hour: '2-digit', minute:'2-digit'})}</td>
+          <td class="py-4 px-4 text-xs opacity-60 w-24">${new Date(c.created_at.replace(' ', 'T') + 'Z').toLocaleTimeString('es-CL', {hour: '2-digit', minute:'2-digit'})}</td>
           <td class="py-4 px-4">
             <span class="block text-sm font-bold text-ink">${c.name || 'Cliente'}</span>
             <span class="block text-xs opacity-60">${c.email}</span>
