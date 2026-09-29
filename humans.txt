@@ -1,0 +1,11 @@
+/* TEAM */
+Floristería: Soho Flowers
+Taller: Concón, Región de Valparaíso, Chile
+Contacto: +56 9 5113 4778
+Sitio: https://sohoflowers.cl
+
+/* SITE */
+Idioma: Español (Chile)
+Estándares: HTML5, schema.org Florist + Product
+Pagos: Webpay (Transbank), PayPal
+Última actualización: 2026-09-29

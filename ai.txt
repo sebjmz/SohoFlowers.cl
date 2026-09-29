@@ -1,0 +1,9 @@
+# Contacto para agentes y sistemas automáticos
+Contact: https://sohoflowers.cl/
+Contact: https://wa.me/56951134778
+Preferred-Languages: es-CL, es
+llms-txt: https://sohoflowers.cl/llms.txt
+llms-full: https://sohoflowers.cl/llms-full.txt
+catalog: https://sohoflowers.cl/catalogo.md
+sitemap: https://sohoflowers.cl/sitemap.xml
+hub: Concón, Valparaíso, Chile
