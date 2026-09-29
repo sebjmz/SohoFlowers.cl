@@ -247,11 +247,11 @@ function renderGrid() {
       <p class="text-[11px] font-sans opacity-50 mt-2 line-clamp-2 leading-relaxed">${p.desc}</p>
       <div class="mt-4 flex items-center justify-between">
         <span class="display text-2xl text-ink">${clp(p.price)}</span>
-        <span class="micro opacity-0 group-hover:opacity-100 transition-opacity duration-500 text-goldink">Agregar +</span>
+        <!-- FIX: Ahora es siempre visible, dorado, en negrita y con cursor de mano -->
+        <span class="micro font-bold text-goldink cursor-pointer hover:opacity-70 transition-opacity duration-300">Agregar +</span>
       </div>
     </div>`).join("");
 }
-
 /* ═══ BOLSA CON MINIATURAS ═══ */
 function addToCart(id) {
   const p = CATALOG.find(x => x.id === id);
