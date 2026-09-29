@@ -27,6 +27,7 @@ tailwind.config = { theme: { extend: {
   html { scroll-behavior: smooth; }
   /* Tracking más cerrado en títulos, pesos más ligeros */
   .display { font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 400; letter-spacing: -0.02em; }
+  .hero-title { text-shadow: 0 2px 4px rgba(14,21,18,0.18), 0 6px 24px rgba(14,21,18,0.28); }
   .micro { font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; font-weight: 700; }
   
   /* Botones con transiciones lentas y sin bordes pesados */
@@ -112,7 +113,7 @@ tailwind.config = { theme: { extend: {
   </div>
   <div class="relative z-10 max-w-4xl mx-auto px-4 flex flex-col items-center pt-20">
     <p class="micro text-goldink fade-up tracking-[0.3em]">Viña · Reñaca · Concón</p>
-    <h1 class="display text-6xl md:text-[8rem] leading-[0.85] mt-6 fade-up" style="animation-delay:.1s">
+    <h1 class="display hero-title text-6xl md:text-[8rem] leading-[0.85] mt-6 fade-up" style="animation-delay:.1s">
       Llegan hoy.<br>Impecables.<br><span class="text-goldhero">Sin vueltas.</span>
     </h1>
     <div class="mt-14 flex flex-col items-center gap-6 fade-up" style="animation-delay:.3s">
