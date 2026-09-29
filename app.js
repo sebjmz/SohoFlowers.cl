@@ -102,8 +102,8 @@ try {
 }
 
 /* ═══ SESIÓN & TRACKING 4D ═══ */
-const sid = sessionStorage.getItem("soho_sid") || ("sid_" + Date.now() + "_" + Math.floor(Math.random() * 1e5));
-sessionStorage.setItem("soho_sid", sid);
+let sid = "sid_" + Date.now() + "_" + Math.floor(Math.random() * 1e5);
+try { sid = sessionStorage.getItem("soho_sid") || sid; sessionStorage.setItem("soho_sid", sid); } catch (e) {}
 
 let pagePath = window.location.pathname || "/";
 if (pagePath === "/") pagePath = "/index.html";
@@ -128,6 +128,7 @@ if (pagePath.includes("gracias.html")) {
 /* ═══ UTILIDADES ═══ */
 const $ = id => document.getElementById(id);
 const clp = n => "$" + n.toLocaleString("es-CL");
+const flowersSubtotal = () => cart.reduce((a, i) => a + i.price * i.qty, 0);
 
 const hoyDate = () => new Date(new Date().toLocaleString("en-US", { timeZone: "America/Santiago" }));
 
@@ -149,69 +150,9 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 /* ═══ PERSISTENCIA DEL CHECKOUT TOTAL ═══ */
-function guardarProgreso() {
-  const data = {
-    buyerEmail:    $("buyer-email")?.value    || "",
-    buyerWhatsapp: $("buyer-whatsapp")?.value || "",
-    senderName:    $("sender-name")?.value    || "",
-    receiverName:  $("receiver-name")?.value  || "",
-    receiverPhone: $("receiver-phone")?.value || "",
-    address:       $("address")?.value        || "",
-    pickupName:    $("pickup-name")?.value    || "",
-    deliveryNote:  $("delivery-note")?.value  || "",
-    cardMessage:   $("card-message")?.value   || "",
-    isAnon:        $("envio-anonimo")?.checked || false
-  };
-  localStorage.setItem("soho_checkout_inputs", JSON.stringify(data));
-  localStorage.setItem("soho_logistics", S.logistics);
-  if (S.zone && S.zone.id) {
-    localStorage.setItem("soho_zone_id", String(S.zone.id));
-  } else {
-    localStorage.removeItem("soho_zone_id");
-  }
-  localStorage.setItem("soho_date", S.date || "");
-  localStorage.setItem("soho_time", S.time || "");
-  localStorage.setItem("soho_express", String(S.express));
-}
 
-function restaurarProgreso() {
-  const data = JSON.parse(localStorage.getItem("soho_checkout_inputs") || "{}");
-  const fields = [
-    "buyer-email", "buyer-whatsapp", "sender-name", "receiver-name",
-    "receiver-phone", "address", "pickup-name", "delivery-note", "card-message"
-  ];
-  fields.forEach(id => {
-    const el = $(id);
-    const key = id.replace(/-([a-z])/g, (_, l) => l.toUpperCase());
-    if (el && data[key] !== undefined) el.value = data[key];
-  });
-  if ($("envio-anonimo") && data.isAnon !== undefined) {
-    $("envio-anonimo").checked = data.isAnon;
-  }
-  const savedLogistics = localStorage.getItem("soho_logistics") || "envio";
-  setLogistics(savedLogistics);
-  const savedZoneId = parseInt(localStorage.getItem("soho_zone_id"), 10);
-  if (savedZoneId) setZone(savedZoneId);
 
-  const savedDate = localStorage.getItem("soho_date");
-  if (savedDate) {
-    S.date = savedDate;
-    $("date-hoy")?.classList.toggle("on", savedDate === "hoy");
-    $("date-manana")?.classList.toggle("on", savedDate === "manana");
-    renderTimes();
-  }
 
-  const savedTime = localStorage.getItem("soho_time");
-  const savedExpress = localStorage.getItem("soho_express") === "true";
-  if (savedTime) {
-    S.time = savedTime;
-    S.express = savedExpress;
-    document.querySelectorAll("#time-chips .chip").forEach(b => {
-      if (b.innerText.trim() === savedTime.trim()) b.classList.add("on");
-    });
-  }
-  renderTotals();
-}
 
 /* ═══ EMBUDO ═══ */
 function startFunnel(mode) {
@@ -232,25 +173,6 @@ function filterOccasion(occ) {
 }
 
 /* ═══ CATÁLOGO ═══ */
-function renderGrid() {
-  const grid = $("product-grid");
-  if (!grid) return;
-  const items = S.occasion === "todos" ? CATALOG : CATALOG.filter(p => p.occ === S.occasion);
-  grid.className = "grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-12 md:gap-x-6 md:gap-y-16";
-  grid.innerHTML = items.map(p => `
-    <div class="group flex flex-col cursor-pointer" onclick="addToCart(${p.id})">
-      <div class="relative aspect-[4/5] bg-ink/5 rounded-none overflow-hidden mb-4">
-        <img src="${p.img}" loading="lazy" alt="${p.name}" class="absolute inset-0 w-full h-full object-cover transition-transform duration-[800ms] ease-out group-hover:scale-[1.04]">
-        ${BADGES.includes(p.id) ? `<span class="absolute top-4 left-4 z-10 bg-ivory/80 backdrop-blur-md px-3 py-1.5 micro text-[8px] text-ink">Más Vendidos</span>` : ""}
-      </div>
-      <h3 class="display text-2xl md:text-3xl leading-none text-ink">${p.name}</h3>
-      <p class="text-[11px] font-sans opacity-50 mt-2 line-clamp-2 leading-relaxed">${p.desc}</p>
-      <div class="mt-4 flex items-center justify-between">
-        <span class="display text-2xl text-ink">${clp(p.price)}</span>
-        <span class="micro opacity-0 group-hover:opacity-100 transition-opacity duration-500 text-goldink">Agregar +</span>
-      </div>
-    </div>`).join("");
-}
 
 /* ═══ BOLSA CON MINIATURAS ═══ */
 function addToCart(id) {
@@ -266,7 +188,7 @@ function addToCart(id) {
   window.trackEvent4D("add_to_cart", { product_id: id, product_name: p.name, value: p.price });
 }
 
-function chooseProduct(id) { addToCart(id); }
+
 function removeFromCart(id) { cart = cart.filter(i => i.id !== id); localStorage.setItem("soho_cart", JSON.stringify(cart)); updateCartUI(); }
 
 function updateQty(id, d) {
@@ -334,222 +256,405 @@ function procederCheckout() {
   openCheckout();
 }
 
-/* ═══ CHECKOUT ═══ */
-function flowersSubtotal() { return cart.reduce((a, i) => a + i.price * i.qty, 0); }
+/* ═══════════════════════════════════════════════════════════════
+   CHECKOUT SECUENCIAL PASO A PASO (Estilo La Foresta)
+   ═══════════════════════════════════════════════════════════════ */
 
 function openCheckout() {
-  if (!cart.length) { document.getElementById("coleccion").scrollIntoView({ behavior: "smooth" }); return; }
+  if (!cart.length) {
+    alert("Su bolsa está vacía. Añada un arreglo primero.");
+    document.getElementById("coleccion")?.scrollIntoView({ behavior: "smooth" });
+    return;
+  }
+  
   S.code = localStorage.getItem("soho_draft_code") || ("SF-" + Date.now());
   localStorage.setItem("soho_draft_code", S.code);
-  $("checkout-overlay").classList.remove("hidden");
+
+  const flow = $("checkout-flow");
+  if (!flow) return;
+  
+  flow.classList.remove("hidden");
+  setTimeout(() => flow.classList.add("open"), 10);
   document.body.style.overflow = "hidden";
-  renderZones();
-  renderSummary();
-  restaurarProgreso();
-  goStep(1);
+
+  restaurarProgresoCheckout();
   cargarCupos(S.calendarDate);
+  actualizarVistaHoyCheckout();
+  
+  const savedStep = localStorage.getItem("soho_checkout_step") || "step-1";
+  goToStep(savedStep);
+
   window.trackEvent4D("begin_checkout", { value: flowersSubtotal(), order_code: S.code });
 }
 
-function closeCheckout() { $("checkout-overlay").classList.add("hidden"); document.body.style.overflow = "auto"; }
-
-/* ═══ VALIDACIÓN ESTRICTA DE CAMPOS ═══ */
-function validarPaso(paso) {
-  if (paso === 1) {
-    if (S.logistics === "envio") {
-      if (!S.zone) {
-        alert("Debes seleccionar la comuna o sector de entrega.");
-        $("zone-chips")?.scrollIntoView({ behavior: "smooth", block: "center" });
-        return false;
-      }
-      const addr = $("address")?.value.trim() || "";
-      if (addr.length < 5) {
-        alert("Debes ingresar la dirección exacta de entrega (calle, número y depto/casa).");
-        $("address")?.focus();
-        return false;
-      }
-    } else if (S.logistics === "retiro") {
-      const pick = $("pickup-name")?.value.trim() || "";
-      if (pick.length < 3) {
-        alert("Debes indicar el nombre completo de la persona que retirará en el taller.");
-        $("pickup-name")?.focus();
-        return false;
-      }
-    }
-    if (!S.date) {
-      alert("Debes seleccionar una fecha de entrega (Hoy, Mañana o Calendario).");
-      return false;
-    }
-    const activeChip = document.querySelector("#time-chips .chip.on");
-    if (!S.time || !activeChip) {
-      alert("Debes seleccionar obligatoriamente un bloque horario de entrega.");
-      $("time-chips")?.scrollIntoView({ behavior: "smooth", block: "center" });
-      return false;
-    }
-    return true;
-  }
-  if (paso === 2) {
-    const sender = $("sender-name")?.value.trim() || "";
-    if (sender.length < 2) {
-      alert("Debes ingresar tu nombre (quien realiza el pedido).");
-      $("sender-name")?.focus();
-      return false;
-    }
-    const email = $("buyer-email")?.value.trim() || "";
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      alert("Debes ingresar un correo electrónico válido para recibir la confirmación y boleta.");
-      $("buyer-email")?.focus();
-      return false;
-    }
-    const buyerPhone = $("buyer-whatsapp")?.value.trim() || "";
-    if ($("buyer-whatsapp") && buyerPhone.replace(/\D/g, "").length < 8) {
-      alert("Debes ingresar tu número de teléfono / WhatsApp de contacto.");
-      $("buyer-whatsapp")?.focus();
-      return false;
-    }
-    const receiver = $("receiver-name")?.value.trim() || "";
-    if (receiver.length < 2) {
-      alert("Debes ingresar el nombre de la persona que recibe las flores.");
-      $("receiver-name")?.focus();
-      return false;
-    }
-    const receiverPhone = $("receiver-phone")?.value.trim() || "";
-    if (receiverPhone.replace(/\D/g, "").length < 8) {
-      alert("Debes ingresar un teléfono de contacto válido para coordinar la entrega.");
-      $("receiver-phone")?.focus();
-      return false;
-    }
-    window.trackEvent4D("lead_captured", {
-      email, step_name: "step-buyer-email", cart_value: flowersSubtotal(), name: sender
-    });
-    return true;
-  }
-  return true;
+function closeCheckout() {
+  const flow = $("checkout-flow");
+  if (!flow) return;
+  flow.classList.remove("open");
+  setTimeout(() => {
+    flow.classList.add("hidden");
+    document.body.style.overflow = "";
+  }, 600);
 }
 
-/* FIX 2: goStep sin doble validación */
-function goStep(n) {
-  let currentStep = 1;
-  if ($("step-2") && !$("step-2").classList.contains("hidden")) currentStep = 2;
-  else if ($("step-3") && !$("step-3").classList.contains("hidden")) currentStep = 3;
+function goToStep(stepId) {
+  document.querySelectorAll(".checkout-step").forEach(s => s.classList.remove("active"));
+  const target = $(stepId);
+  if (target) {
+    target.classList.add("active");
+    target.scrollTop = 0;
+  }
+  localStorage.setItem("soho_checkout_step", stepId);
+  guardarProgresoCheckout();
 
-  if (n > currentStep) {
-    // Validar secuencialmente solo los pasos que aún no han sido validados
-    for (let s = currentStep; s < n; s++) {
-      if (!validarPaso(s)) {
-        // Si falla, mostrar el paso que falló
-        [1, 2, 3].forEach(i => {
-          $("step-" + i)?.classList.toggle("hidden", i !== s);
-          const p = $("prog-" + i);
-          if (p) {
-            if (i === s) {
-              p.classList.add("text-goldink", "border-goldink", "opacity-100");
-              p.classList.remove("border-transparent", "opacity-40");
-            } else {
-              p.classList.remove("text-goldink", "border-goldink", "opacity-100");
-              p.classList.add("border-transparent", "opacity-40");
-            }
-          }
-        });
-        return;
-      }
-    }
+  if (stepId === "step-time") renderHorariosInteligentes();
+  if (stepId === "step-calendario") { renderCalendarView(); cargarCupos(S.calendarDate).then(renderCalendarView); }
+  if (stepId === "step-6") renderResumenFinal();
+
+  window.trackEvent4D("checkout_step", { step_target: stepId });
+}
+
+/* ── Validaciones individuales ── */
+function validarEmailYContinuar() {
+  const email = $("buyer-email")?.value.trim() || "";
+  const phone = $("buyer-whatsapp")?.value.trim() || "";
+
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    alert("Por favor ingresa un correo electrónico válido para tu confirmación.");
+    $("buyer-email")?.focus();
+    return;
+  }
+  if (!phone || phone.replace(/\D/g, "").length < 8) {
+    alert("Por favor ingresa tu número de WhatsApp o teléfono de contacto.");
+    $("buyer-whatsapp")?.focus();
+    return;
   }
 
-  [1, 2, 3].forEach(i => {
-    $("step-" + i)?.classList.toggle("hidden", i !== n);
-    const p = $("prog-" + i);
-    if (p) {
-      if (i === n) {
-        p.classList.add("text-goldink", "border-goldink", "opacity-100");
-        p.classList.remove("border-transparent", "opacity-40");
-      } else {
-        p.classList.remove("text-goldink", "border-goldink", "opacity-100");
-        p.classList.add("border-transparent", "opacity-40");
-      }
-    }
+  window.trackEvent4D("lead_captured", {
+    email,
+    step_name: "step-buyer-email",
+    cart_value: flowersSubtotal(),
+    name: $("sender-name")?.value || ""
   });
 
-  if (n === 2) $("sender-name")?.focus();
-  if (n === 3) renderTotals();
-  guardarProgreso();
-  window.trackEvent4D("checkout_step", { step: n });
+  goToStep("step-2");
 }
 
-function renderSummary() {
-  const cs = $("cart-summary");
-  if (!cs) return;
-  cs.innerHTML = cart.map(i => `
-    <div class="flex justify-between items-center border border-ink/10 rounded-xl px-4 py-3 bg-white">
-      <span class="display text-xl">${i.name} <span class="text-xs opacity-50 not-italic font-sans">×${i.qty}</span></span>
-      <span class="display text-xl text-goldink">${clp(i.price * i.qty)}</span>
-    </div>`).join("");
+function validarReceptorYContinuar() {
+  const name = $("receiver-name")?.value.trim() || "";
+  if (name.length < 2) {
+    alert("Por favor indica el nombre de la persona que recibirá las flores.");
+    $("receiver-name")?.focus();
+    return;
+  }
+  goToStep("step-3");
 }
 
-function setLogistics(m) {
+function seleccionarModalidad(m) {
   S.logistics = m;
-  $("mod-envio")?.classList.toggle("on", m === "envio");
-  $("mod-retiro")?.classList.toggle("on", m === "retiro");
-  const zb = $("zone-block");
-  if (zb) zb.style.display = m === "envio" ? "" : "none";
-  const pb = $("pickup-block");
-  if (pb) pb.style.display = m === "retiro" ? "" : "none";
-  renderTimes();
-  guardarProgreso();
+  if (m === "envio") {
+    goToStep("step-zona");
+  } else {
+    S.zone = null;
+    if (S.express) { S.express = false; S.time = ""; }
+    goToStep("step-quien-retira");
+  }
+  guardarProgresoCheckout();
 }
 
-function renderZones() {
-  const zc = $("zone-chips");
-  if (!zc) return;
-  zc.innerHTML = CONFIG.zones.map(z => `
-    <button type="button" onclick="setZone(${z.id})" id="zone-${z.id}" class="chip px-4 py-2 micro rounded-full">${z.name} +${clp(z.price)}</button>`).join("");
-  if (S.zone) setZone(S.zone.id);
+function seleccionarZona(id) {
+  S.zone = CONFIG.zones.find(z => z.id === id) || null;
+  guardarProgresoCheckout();
+  goToStep("step-direccion");
 }
 
-function setZone(id) {
-  S.zone = CONFIG.zones.find(z => z.id === id);
-  CONFIG.zones.forEach(z => $("zone-" + z.id)?.classList.toggle("on", z.id === id));
-  if ($("zone-detail")) $("zone-detail").innerText = S.zone.detail;
-  renderTotals();
-  guardarProgreso();
+function confirmarDireccion() {
+  const addr = $("address")?.value.trim() || "";
+  if (addr.length < 5) {
+    alert("Por favor ingresa la dirección completa de entrega (calle, número y depto/casa).");
+    $("address")?.focus();
+    return;
+  }
+  goToStep("step-fecha");
 }
 
-function setDate(v) {
-  S.date = v;
+function confirmarRetiro() {
+  const pick = $("pickup-name")?.value.trim() || "";
+  if (pick.length < 3) {
+    alert("Por favor ingresa el nombre de la persona que retirará en el taller.");
+    $("pickup-name")?.focus();
+    return;
+  }
+  goToStep("step-fecha");
+}
+
+function regresarDesdeFecha() {
+  if (S.logistics === "envio") goToStep("step-direccion");
+  else goToStep("step-quien-retira");
+}
+
+function seleccionarFecha(modo) {
+  if (modo === "futuro") {
+    goToStep("step-calendario");
+  } else {
+    S.date = modo;
+    S.express = false;
+    S.time = "";
+    guardarProgresoCheckout();
+    goToStep("step-time");
+  }
+}
+
+/* ── Calendario Visual Pantalla Completa ── */
+function renderCalendarView() {
+  const grid = $("calendar-grid-view"), title = $("cal-month-title-view");
+  if (!grid || !title) return;
+
+  const today = hoyDate();
+  const y = S.calendarDate.getFullYear(), m = S.calendarDate.getMonth();
+  const meses = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+  title.innerText = `${meses[m]} ${y}`;
+
+  if ($("cal-prev-btn")) $("cal-prev-btn").style.visibility = (y === today.getFullYear() && m === today.getMonth()) ? "hidden" : "visible";
+
+  const firstDay = new Date(y, m, 1).getDay();
+  const daysInMonth = new Date(y, m + 1, 0).getDate();
+  const parts = [];
+
+  for (let g = 0; g < firstDay; g++) parts.push("<div></div>");
+
+  for (let day = 1; day <= daysInMonth; day++) {
+    const d = new Date(y, m, day); d.setHours(0, 0, 0, 0);
+    const t = new Date(today); t.setHours(0, 0, 0, 0);
+    const dateStr = `${y}-${String(m + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    const libres = getCuposLibres(dateStr);
+
+    if (d.getTime() < t.getTime()) {
+      parts.push(`<div class="py-4 text-center opacity-25 font-serif text-lg">${day}</div>`);
+    } else if (libres <= 0) {
+      parts.push(`<div class="py-4 font-serif text-lg line-through opacity-30 text-center">${day}</div>`);
+    } else {
+      const badge = libres <= 5 ? `<span class="text-[11px] text-goldink block leading-none mt-1">Disp ${libres}</span>` : "";
+      parts.push(`
+        <button onclick="seleccionarDiaCalendario('${dateStr}')" class="py-3 font-serif text-xl font-bold hover:text-gold transition flex flex-col items-center justify-center border border-ink/10 hover:border-gold bg-white">
+          <span>${day}</span>${badge}
+        </button>`);
+    }
+  }
+  grid.innerHTML = parts.join("");
+}
+
+
+
+function seleccionarDiaCalendario(dateStr) {
+  S.date = dateStr;
   S.express = false;
   S.time = "";
-  localStorage.removeItem("soho_time");
-  $("date-hoy")?.classList.toggle("on", v === "hoy");
-  $("date-manana")?.classList.toggle("on", v === "manana");
-  renderTimes();
-  guardarProgreso();
+  guardarProgresoCheckout();
+  goToStep("step-time");
 }
+
+/* ── Horarios ── */
+function renderHorariosInteligentes() {
+  const cont = $("time-slots-view");
+  const label = $("time-chosen-date-label");
+  if (!cont) return;
+
+  const isHoy = S.date === "hoy" || S.date === hoyStr();
+  const now = hoyDate();
+  const h = now.getHours() + now.getMinutes() / 60;
+
+  if (label) {
+    label.innerText = isHoy ? `Entregas para HOY (${hoyDate().toLocaleDateString("es-CL", { day: "numeric", month: "long" })})` : `Entrega: ${fmtFecha(S.date)}`;
+  }
+
+  let html = "";
+  if (!isHoy) {
+    html = ["Mañana (10:00–13:00)", "Mediodía (14:00–17:00)", "Tarde (18:00–21:00)"].map(t => `
+      <button onclick="definirHorario('${t}', false)" class="step-option-big w-full py-4 text-sm uppercase tracking-widest font-bold bg-white text-ink">${t}</button>
+    `).join("");
+  } else {
+    if (h < 9)  html += `<button onclick="definirHorario('Mañana (10:00–13:00)', false)" class="step-option-big w-full py-4 text-sm uppercase tracking-widest font-bold bg-white text-ink">Mañana (10:00–13:00)</button>`;
+    if (h < 11) html += `<button onclick="definirHorario('Mediodía (14:00–17:00)', false)" class="step-option-big w-full py-4 text-sm uppercase tracking-widest font-bold bg-white text-ink">Mediodía (14:00–17:00)</button>`;
+    if (h < 14) html += `<button onclick="definirHorario('Tarde (18:00–21:00)', false)" class="step-option-big w-full py-4 text-sm uppercase tracking-widest font-bold bg-white text-ink">Tarde (18:00–21:00)</button>`;
+
+    if (S.logistics === "envio") {
+      let start = now.getMinutes() === 0 ? now.getHours() + 1 : now.getHours() + 2;
+      start = Math.max(11, start);
+      if (start <= 20) {
+        html += `<p class="micro text-goldink pt-4 pb-1 text-left">Express 1–2 h (+50% solo sobre el envío):</p>`;
+        for (let a = start; a <= 20; a++) {
+          const tName = `Express (${String(a).padStart(2,"0")}:00–${String(a+1).padStart(2,"0")}:00)`;
+          html += `<button onclick="definirHorario('${tName}', true)" class="step-option-big w-full py-4 text-[13px] uppercase tracking-widest font-bold border border-gold text-goldink bg-white">${tName}</button>`;
+        }
+      }
+    }
+  }
+
+  cont.innerHTML = html || `<p class="text-sm opacity-50 py-4">Cupos cerrados para hoy. Elige otra fecha.</p><button onclick="goToStep('step-fecha')" class="btn-line micro py-4 px-6 mt-2">Ver fechas disponibles</button>`;
+}
+
+function regresarDesdeTime() {
+  if (S.date === "hoy" || S.date === "manana") goToStep("step-fecha");
+  else goToStep("step-calendario");
+}
+
+function definirHorario(slot, isExp) {
+  S.time = slot;
+  S.express = isExp;
+  guardarProgresoCheckout();
+  setTimeout(() => goToStep("step-4"), 300);
+}
+
+function validarTelefonoYContinuar() {
+  const phone = $("receiver-phone")?.value.trim() || "";
+  if (phone.replace(/\D/g, "").length < 8) {
+    alert("Por favor ingresa un teléfono válido para quien recibe.");
+    $("receiver-phone")?.focus();
+    return;
+  }
+  goToStep("step-6");
+}
+
+/* ── Resumen Final ── */
+function renderResumenFinal() {
+  const cont = $("checkout-final-summary");
+  if (!cont) return;
+
+  const t = calcTotals();
+  const isEnvio = S.logistics === "envio";
+
+  cont.innerHTML = `
+    <div class="border-b border-ink/10 pb-4 mb-4">
+      <p class="micro opacity-50 mb-2">Arreglos Seleccionados</p>
+      ${cart.map(i => `
+        <div class="flex justify-between items-center text-base mb-1">
+          <span>${i.name} <span class="opacity-50">×${i.qty}</span></span>
+          <span class="font-bold">${clp(i.price * i.qty)}</span>
+        </div>
+      `).join("")}
+    </div>
+
+    <div class="space-y-1.5 text-sm pb-4 border-b border-ink/10">
+      <div class="flex justify-between text-sm opacity-80">
+        <span>Destino</span>
+        <span class="font-bold">${isEnvio ? (S.zone?.name || "Envío a Domicilio") : "Retiro en Atelier"}</span>
+      </div>
+      <div class="flex justify-between text-sm opacity-80">
+        <span>Fecha y Hora</span>
+        <span>${fmtFecha(S.date)} · ${S.time}</span>
+      </div>
+      <div class="flex justify-between pt-2">
+        <span>Subtotal Flores</span>
+        <span>${clp(t.sub)}</span>
+      </div>
+      <div class="flex justify-between">
+        <span>Costo Logística</span>
+        <span>${isEnvio ? clp(t.ship) : "$0"}</span>
+      </div>
+      ${t.bonus ? `
+        <div class="flex justify-between text-goldink">
+          <span>Envío de Cortesía</span>
+          <span>−${clp(t.bonus)}</span>
+        </div>` : ""}
+    </div>
+
+    <div class="flex justify-between items-end pt-2">
+      <span class="micro opacity-60">Total a Pagar</span>
+      <span class="display text-3xl md:text-4xl text-goldink font-bold">${clp(t.total)}</span>
+    </div>
+  `;
+}
+
+function actualizarVistaHoyCheckout() {
+  const btn = $("btn-fecha-hoy");
+  if (!btn) return;
+  const libres = getCuposLibres(hoyStr());
+  const now = hoyDate();
+
+  if (libres <= 0 || now.getHours() >= CONFIG.expressCutoffHour) {
+    btn.innerHTML = `<span class="line-through opacity-40">Hoy</span><span class="text-[11px] text-goldink block mt-1">Agotado</span>`;
+    btn.disabled = true;
+    btn.classList.add("opacity-40", "cursor-not-allowed");
+  } else if (libres <= 5) {
+    btn.innerHTML = `Hoy <span class="text-[11px] text-goldink block mt-1">Solo ${libres} cupos</span>`;
+    btn.disabled = false;
+    btn.classList.remove("opacity-40", "cursor-not-allowed");
+  } else {
+    btn.innerHTML = `Hoy`;
+    btn.disabled = false;
+    btn.classList.remove("opacity-40", "cursor-not-allowed");
+  }
+}
+
+/* ── Persistencia Paso a Paso ── */
+function guardarProgresoCheckout() {
+  const data = {
+    senderName:    $("sender-name")?.value    || "",
+    buyerEmail:    $("buyer-email")?.value    || "",
+    buyerWhatsapp: $("buyer-whatsapp")?.value || "",
+    receiverName:  $("receiver-name")?.value  || "",
+    receiverPhone: $("receiver-phone")?.value || "",
+    address:       $("address")?.value        || "",
+    deliveryNote:  $("delivery-note")?.value  || "",
+    pickupName:    $("pickup-name")?.value    || "",
+    cardMessage:   $("card-message")?.value   || "",
+    isAnon:        $("envio-anonimo")?.checked || false
+  };
+
+  localStorage.setItem("soho_checkout_inputs", JSON.stringify(data));
+  localStorage.setItem("soho_logistics", S.logistics);
+  if (S.zone && S.zone.id) localStorage.setItem("soho_zone_id", String(S.zone.id));
+  else localStorage.removeItem("soho_zone_id");
+  localStorage.setItem("soho_date", S.date || "");
+  localStorage.setItem("soho_time", S.time || "");
+  localStorage.setItem("soho_express", String(S.express));
+}
+
+function restaurarProgresoCheckout() {
+  const data = JSON.parse(localStorage.getItem("soho_checkout_inputs") || "{}");
+  const fields = ["sender-name", "buyer-email", "buyer-whatsapp", "receiver-name", "receiver-phone", "address", "delivery-note", "pickup-name", "card-message"];
+  
+  fields.forEach(id => {
+    const el = $(id);
+    const key = id.replace(/-([a-z])/g, (_, l) => l.toUpperCase());
+    if (el && data[key] !== undefined) el.value = data[key];
+  });
+
+  if ($("envio-anonimo") && data.isAnon !== undefined) {
+    $("envio-anonimo").checked = data.isAnon;
+  }
+
+  S.logistics = localStorage.getItem("soho_logistics") || "envio";
+  const savedZone = localStorage.getItem("soho_zone_id");
+  if (savedZone) S.zone = CONFIG.zones.find(z => z.id === parseInt(savedZone, 10)) || null;
+  S.date = localStorage.getItem("soho_date") || "";
+  S.time = localStorage.getItem("soho_time") || "";
+  S.express = localStorage.getItem("soho_express") === "true";
+  if (/^\d{4}-\d{2}-\d{2}$/.test(S.date) && S.date < hoyStr()) { S.date = ""; S.time = ""; S.express = false; }
+}
+
+/* ═══ VALIDACIÓN ESTRICTA DE CAMPOS ═══ */
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /* ═══ CALENDARIO CON CUPOS ═══ */
-function showCalendar() {
-  cargarCupos(S.calendarDate);
-  renderCalendar();
-  const modal = $("calendar-modal");
-  if (!modal) return;
-  modal.classList.remove("hidden");
-  setTimeout(() => modal.classList.remove("opacity-0"), 10);
-}
 
-function closeCalendar() {
-  const modal = $("calendar-modal");
-  if (!modal) return;
-  modal.classList.add("opacity-0");
-  setTimeout(() => modal.classList.add("hidden"), 250);
-}
 
-async function cargarCupos(fechaDate) {
-  const yyyy = fechaDate.getFullYear(), mm = String(fechaDate.getMonth() + 1).padStart(2, "0");
-  try {
-    const r = await fetch(`${CONFIG.api.cupos}?mes=${yyyy}-${mm}`);
-    if (r.ok) cuposMes = await r.json();
-  } catch (e) {}
-  updateHoyButton();
-}
+
+
+
 
 function getCuposLibres(dateStr) {
   const vendidos = cuposMes[dateStr] || 0;
@@ -567,140 +672,24 @@ function getCuposLibres(dateStr) {
   return Math.max(0, CONFIG.cuposPorDia - descuentoTotal);
 }
 
-function updateHoyButton() {
-  const btn = $("date-hoy");
-  if (!btn) return;
-  const libres = getCuposLibres(hoyStr());
-  const now = hoyDate();
-  if (libres <= 0 || now.getHours() >= CONFIG.expressCutoffHour) {
-    btn.innerHTML = `<span class="line-through opacity-50">Hoy</span><span class="text-[9px] text-goldink block mt-0.5">Agotado</span>`;
-    btn.disabled = true;
-  } else if (libres <= 5) {
-    btn.innerHTML = `Hoy<span class="text-[9px] text-goldink block mt-0.5">Solo ${libres} cupos</span>`;
-    btn.disabled = false;
-  } else {
-    btn.innerHTML = `Hoy`;
-    btn.disabled = false;
-  }
-}
 
-/* FIX 3: renderCalendar con array.join para eficiencia */
-function renderCalendar() {
-  const grid = $("calendar-grid"), title = $("cal-month-title");
-  if (!grid || !title) return;
-  const today = hoyDate();
-  const r = S.calendarDate.getFullYear(), o = S.calendarDate.getMonth();
-  const meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
-  title.innerText = `${meses[o]} ${r}`;
-  if ($("cal-prev")) $("cal-prev").style.visibility = (r === today.getFullYear() && o === today.getMonth()) ? "hidden" : "visible";
 
-  const firstDay = new Date(r, o, 1).getDay();
-  const daysInMonth = new Date(r, o + 1, 0).getDate();
-  const parts = [];
 
-  for (let g = 0; g < firstDay; g++) parts.push("<div></div>");
 
-  for (let day = 1; day <= daysInMonth; day++) {
-    const d = new Date(r, o, day); d.setHours(0, 0, 0, 0);
-    const t = new Date(today); t.setHours(0, 0, 0, 0);
-    const dateStr = `${r}-${String(o + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-    const libres = getCuposLibres(dateStr);
 
-    if (d.getTime() < t.getTime()) {
-      parts.push(`<div class="py-3 text-center opacity-30 font-serif">${day}</div>`);
-    } else if (libres <= 0) {
-      parts.push(`<button disabled class="py-3 font-serif line-through opacity-40 cursor-not-allowed">${day}</button>`);
-    } else {
-      const badge = libres <= 5 ? `<span class="text-[9px] text-goldink block">${libres}</span>` : "";
-      parts.push(`<button onclick="pickCalendarDay('${dateStr}')" class="py-3 font-serif hover:text-goldink transition font-bold">${day}${badge}</button>`);
-    }
-  }
-  grid.innerHTML = parts.join("");
-}
 
-function changeMonth(dir) {
-  S.calendarDate.setMonth(S.calendarDate.getMonth() + dir);
-  cargarCupos(S.calendarDate);
-  renderCalendar();
-}
 
-function pickCalendarDay(dateStr) {
-  S.date = dateStr;
-  S.express = false;
-  S.time = "";
-  localStorage.removeItem("soho_time");
-  ["date-hoy", "date-manana"].forEach(id => $(id)?.classList.remove("on"));
-  closeCalendar();
-  renderTimes();
-  guardarProgreso();
-}
 
-/* FIX 4: slotMatches más robusto con includes */
-function slotMatches(btn, timeValue) {
-  if (!timeValue) return false;
-  const slot = (btn.getAttribute("data-slot") || "").trim();
-  const text = (btn.innerText || "").trim();
-  return slot === timeValue || text === timeValue || (timeValue.includes(text) && text.length >= 8);
-}
 
-function highlightTimeChip(timeValue) {
-  let matched = false;
-  document.querySelectorAll("#time-chips .chip").forEach(b => {
-    const on = slotMatches(b, timeValue);
-    b.classList.toggle("on", on);
-    if (on) matched = true;
-  });
-  return matched;
-}
 
-function timeChip(label, express) {
-  return `<button type="button" data-slot="${label}" onclick="setTime(this,'${label}',${express})" class="chip px-4 py-3 micro rounded-full${express ? " !border-gold text-goldink" : ""}">${express ? label.replace(/^Express \((.+)\)$/, "$1") : label}</button>`;
-}
+
+
+
 
 /* ═══ HORARIOS INTELIGENTES + EXPRESS ═══ */
-function renderTimes() {
-  const chips = $("time-chips");
-  if (!chips) return;
-  const isHoy = S.date === "hoy" || S.date === hoyStr();
-  const now = hoyDate();
-  const h = now.getHours() + now.getMinutes() / 60;
-  let html = "";
-  if (!S.date) {
-    html = "";
-  } else if (!isHoy) {
-    html = ["Mañana (10:00–13:00)", "Mediodía (14:00–17:00)", "Tarde (18:00–21:00)"].map(t => timeChip(t, false)).join("");
-  } else {
-    if (h < 9)  html += timeChip("Mañana (10:00–13:00)", false);
-    if (h < 11) html += timeChip("Mediodía (14:00–17:00)", false);
-    if (h < 14) html += timeChip("Tarde (18:00–21:00)", false);
-    if (S.logistics === "envio") {
-      let startExpress = now.getMinutes() === 0 ? now.getHours() + 1 : now.getHours() + 2;
-      startExpress = Math.max(10, startExpress);
-      if (startExpress <= 20) {
-        html += `<p class="w-full micro text-goldink pt-3">Express 1–2 h (+50% solo sobre el envío):</p>`;
-        let a = startExpress;
-        while (a <= 20) {
-          html += timeChip(`Express (${String(a).padStart(2, "0")}:00–${String(a + 1).padStart(2, "0")}:00)`, true);
-          a++;
-        }
-      }
-    }
-  }
-  chips.innerHTML = html || `<p class="micro opacity-50">${S.date ? "Entregas de hoy cerradas. Elige otra fecha." : "Elige una fecha para ver horarios."}</p>`;
-  if (S.time && !highlightTimeChip(S.time)) {
-    S.time = "";
-    S.express = false;
-  }
-}
 
-function setTime(el, t, express) {
-  S.time = t;
-  S.express = express;
-  document.querySelectorAll("#time-chips .chip").forEach(b => b.classList.remove("on"));
-  el.classList.add("on");
-  renderTotals();
-  guardarProgreso();
-}
+
+
 
 /* ═══ TOTALES ═══ */
 function calcTotals() {
@@ -711,37 +700,10 @@ function calcTotals() {
   return { sub, baseShip, ship, bonus, total: sub + ship - bonus };
 }
 
-function renderTotals() {
-  const t = calcTotals();
-  let rows = `<div class="flex justify-between"><span class="opacity-60">Arreglos</span><span>${clp(t.sub)}</span></div>`;
-  if (S.logistics === "envio" && S.zone) {
-    rows += `<div class="flex justify-between"><span class="opacity-60">Envío ${S.zone.name}</span><span>${clp(t.baseShip)}</span></div>`;
-    if (S.express) rows += `<div class="flex justify-between"><span class="opacity-60">Express 1–2 h (+50% del envío)</span><span>+${clp(t.ship - t.baseShip)}</span></div>`;
-    if (t.bonus)   rows += `<div class="flex justify-between text-goldink"><span>Envío de cortesía</span><span>−${clp(t.bonus)}</span></div>`;
-  } else {
-    rows += `<div class="flex justify-between"><span class="opacity-60">Retiro en atelier</span><span>$0</span></div>`;
-  }
-  rows += `<div class="flex justify-between items-end pt-2 border-t border-ink/10">
-    <span class="micro opacity-60">Total</span><span class="display text-4xl text-goldink">${clp(t.total)}</span></div>`;
-  if ($("total-breakdown")) $("total-breakdown").innerHTML = rows;
-}
+
 
 /* ═══ DEDICATORIAS ═══ */
-function writeMsg(kind) {
-  const list = MSGS[kind] || [];
-  const msg = list[Math.floor(Math.random() * list.length)];
-  const t = $("card-message");
-  if (!t) return;
-  t.value = "";
-  let i = 0;
-  const iv = setInterval(() => {
-    t.value += msg.charAt(i++);
-    if (i >= msg.length) {
-      clearInterval(iv);
-      guardarProgreso();
-    }
-  }, 15);
-}
+
 
 /* ═══ PAYLOAD (CORREGIDO) ═══ */
 function orderPayload() {
@@ -780,15 +742,17 @@ function orderPayload() {
       valor_envio: t.ship - t.bonus,
       comprador_email: $("buyer-email")?.value || "",
       buyer_whatsapp: $("buyer-whatsapp")?.value || $("receiver-phone")?.value || "",
-      express: S.express
+      express: S.express && S.logistics === "envio"
     }
   };
 }
 
 /* ═══ PAGO 1: WEBPAY vía FLOW ═══ */
+let paying = false;
 async function payFlow() {
-  if (!validarPaso(1)) { goStep(1); return; }
-  if (!validarPaso(2)) { goStep(2); return; }
+  if (!cart.length || !validarPedido()) return;
+  if (paying) return;
+  paying = true;
   window.trackEvent4D("payment_initiated", { method: "FlowWebpay", cart_value: flowersSubtotal(), order_code: S.code });
   try {
     const payload = orderPayload();
@@ -810,14 +774,14 @@ async function payFlow() {
       throw new Error(d.error || "No se pudo generar el enlace de pago");
     }
   } catch (e) {
+    paying = false;
     alert("Error al conectar con Webpay: " + (e.message || "Intenta nuevamente o usa PayPal."));
   }
 }
 
 /* ═══ PAGO 2: PAYPAL ═══ */
 function payPayPal() {
-  if (!validarPaso(1)) { goStep(1); return; }
-  if (!validarPaso(2)) { goStep(2); return; }
+  if (!cart.length || !validarPedido()) return;
   window.trackEvent4D("payment_initiated", { method: "PayPal", cart_value: flowersSubtotal(), order_code: S.code });
   const container = $("paypal-container");
   if (!container) return;
@@ -826,6 +790,7 @@ function payPayPal() {
     return;
   }
   container.innerHTML = "";
+  container.classList.remove("hidden");
   const run = () => {
     paypal.Buttons({
       style: { color: "gold", shape: "rect", label: "pay", height: 45 },
@@ -866,6 +831,7 @@ function payPayPal() {
     paypalLoaded = true;
     run();
   };
+  s.onerror = () => alert("No se pudo cargar PayPal. Usa Webpay o intenta nuevamente.");
   document.body.appendChild(s);
 }
 
@@ -886,6 +852,7 @@ function updateCountdown() {
 }
 
 /* ═══ HEARTBEAT + ABANDONO ═══ */
+let abandonSent = false;
 function reportTime(evt) {
   const seconds = Math.round((Date.now() - pageStartTime) / 1000);
   const cartVal = flowersSubtotal();
@@ -895,15 +862,16 @@ function reportTime(evt) {
   const name = sName ? sName : rName;
   const phone = $("receiver-phone")?.value?.trim() || "";
   window.trackEvent4D("time_on_page", { seconds, cart_value: cartVal, email, name, phone });
-  if (evt && (evt.type === "beforeunload" || evt.type === "pagehide") && email && cartVal > 0) {
+  if (evt && (evt.type === "beforeunload" || evt.type === "pagehide") && email && cartVal > 0 && !abandonSent) {
+    abandonSent = true;
     window.trackEvent4D("abandonment_or_close", {
-      step_name: document.querySelector(".chip.on")?.innerText || "checkout",
+      step_name: localStorage.getItem("soho_checkout_step") || "checkout",
       cart_value: cartVal, email, name, phone
     });
   }
 }
 
-setInterval(reportTime, 15000);
+setInterval(() => { if (document.visibilityState === "visible") reportTime(); }, 15000);
 window.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") reportTime({ type: "visibilitychange" }); });
 window.addEventListener("pagehide", reportTime);
 window.addEventListener("beforeunload", reportTime);
@@ -939,27 +907,113 @@ document.addEventListener("click", function(e) {
   }
 }, true);
 
+/* ═══ CUPOS ═══ */
+async function cargarCupos(fechaDate) {
+  const yyyy = fechaDate.getFullYear(), mm = String(fechaDate.getMonth() + 1).padStart(2, "0");
+  try {
+    const r = await fetch(`${CONFIG.api.cupos}?mes=${yyyy}-${mm}`);
+    if (r.ok) { const d = await r.json(); if (d && typeof d === "object") cuposMes = { ...cuposMes, ...d }; }
+  } catch (e) {}
+  actualizarVistaHoyCheckout();
+}
+
+async function cambiarMesCalendario(dir) {
+  S.calendarDate.setDate(1);
+  S.calendarDate.setMonth(S.calendarDate.getMonth() + dir);
+  renderCalendarView();
+  await cargarCupos(S.calendarDate);
+  renderCalendarView();
+}
+
+/* ═══ CATÁLOGO (tarjetas grandes: 3 por fila en escritorio) ═══ */
+function renderGrid() {
+  const grid = $("product-grid");
+  if (!grid) return;
+  const items = S.occasion === "todos" ? CATALOG : CATALOG.filter(p => p.occ === S.occasion);
+  grid.className = "grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-10 md:gap-x-10 md:gap-y-16";
+  grid.innerHTML = items.map(p => `
+    <div class="group flex flex-col cursor-pointer" onclick="addToCart(${p.id})">
+      <div class="relative aspect-[4/5] bg-ink/5 overflow-hidden mb-4 md:mb-5">
+        <img src="${p.img}" loading="lazy" alt="${p.name}" class="absolute inset-0 w-full h-full object-cover transition-transform duration-[800ms] ease-out group-hover:scale-[1.04]">
+        ${BADGES.includes(p.id) ? `<span class="absolute top-3 left-3 z-10 bg-ivory/90 backdrop-blur-md px-3 py-1.5 micro text-ink">Más Vendidos</span>` : ""}
+      </div>
+      <h3 class="display text-2xl md:text-4xl leading-tight text-ink">${p.name}</h3>
+      <p class="text-sm md:text-base font-sans opacity-70 mt-2 line-clamp-3 leading-relaxed">${p.desc}</p>
+      <div class="mt-4 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+        <span class="display text-3xl md:text-4xl text-ink">${clp(p.price)}</span>
+        <span class="text-xs md:text-sm font-bold uppercase tracking-widest text-goldink group-hover:opacity-70 transition-opacity">Agregar +</span>
+      </div>
+    </div>`).join("");
+}
+
+/* ═══ FECHAS Y VALIDACIÓN ═══ */
+function fmtFecha(v) {
+  const s = (!v || v === "hoy") ? hoyStr() : v === "manana" ? mananaStr() : v;
+  const [y, m, d] = s.split("-").map(Number);
+  if (!y) return s;
+  return new Date(y, m - 1, d).toLocaleDateString("es-CL", { weekday: "long", day: "numeric", month: "long" });
+}
+
+function validarRemitenteYContinuar() {
+  if (($("sender-name")?.value.trim() || "").length < 2) {
+    alert("Por favor indica tu nombre (quien realiza el pedido).");
+    $("sender-name")?.focus();
+    return;
+  }
+  goToStep("step-buyer-email");
+}
+
+function validarPedido() {
+  const v = id => ($(id)?.value || "").trim();
+  const digits = id => v(id).replace(/\D/g, "").length;
+  const fail = (step, msg, focusId) => {
+    alert(msg);
+    goToStep(step);
+    if (focusId) setTimeout(() => $(focusId)?.focus(), 80);
+    return false;
+  };
+  if (v("sender-name").length < 2) return fail("step-1", "Indica tu nombre (quien realiza el pedido).", "sender-name");
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v("buyer-email"))) return fail("step-buyer-email", "Ingresa un correo electrónico válido para la confirmación.", "buyer-email");
+  if (digits("buyer-whatsapp") < 8) return fail("step-buyer-email", "Ingresa tu WhatsApp o teléfono de contacto.", "buyer-whatsapp");
+  if (v("receiver-name").length < 2) return fail("step-2", "Indica quién recibirá las flores.", "receiver-name");
+  if (S.logistics === "envio") {
+    if (!S.zone) return fail("step-zona", "Selecciona la comuna o sector de entrega.");
+    if (v("address").length < 5) return fail("step-direccion", "Ingresa la dirección completa de entrega.", "address");
+  } else if (v("pickup-name").length < 3) {
+    return fail("step-quien-retira", "Indica quién retirará en el taller.", "pickup-name");
+  }
+  if (!S.date) return fail("step-fecha", "Selecciona la fecha de entrega.");
+  if (!S.time) return fail("step-time", "Selecciona un bloque horario.");
+  if (digits("receiver-phone") < 8) return fail("step-5", "Ingresa un teléfono válido de quien recibe.", "receiver-phone");
+  return true;
+}
+
+/* ═══ DEDICATORIAS ═══ */
+let msgTimer = null;
+function escribirMensaje(kind) {
+  const list = MSGS[kind] || [];
+  const t = $("card-message");
+  if (!t || !list.length) return;
+  const msg = list[Math.floor(Math.random() * list.length)];
+  clearInterval(msgTimer);
+  t.value = "";
+  let i = 0;
+  msgTimer = setInterval(() => {
+    t.value += msg.charAt(i++);
+    if (i >= msg.length) { clearInterval(msgTimer); guardarProgresoCheckout(); }
+  }, 15);
+}
+
 /* ═══ INIT ═══ */
 document.addEventListener("DOMContentLoaded", () => {
-  const chkOverlay = $("checkout-overlay");
-  if (chkOverlay) {
-    chkOverlay.addEventListener("input", guardarProgreso);
-    chkOverlay.addEventListener("change", guardarProgreso);
-  }
   if ($("product-grid")) renderGrid();
   updateCartUI();
   cargarCupos(S.calendarDate);
-  if ($("date-input")) $("date-input").min = mananaStr();
-  if ($("time-chips") && S.date) setDate(S.date);
-  if ($("mod-retiro") && S.logistics === "retiro") setLogistics("retiro");
+  restaurarProgresoCheckout();
   updateCountdown();
   setInterval(updateCountdown, 1000);
-  restaurarProgreso();
 });
 
 window.addEventListener("pageshow", e => {
-  if (e.persisted) {
-    restaurarProgreso();
-    updateCartUI();
-  }
+  if (e.persisted) { restaurarProgresoCheckout(); updateCartUI(); }
 });
