@@ -334,24 +334,385 @@ function procederCheckout() {
   openCheckout();
 }
 
-/* ═══ CHECKOUT ═══ */
-function flowersSubtotal() { return cart.reduce((a, i) => a + i.price * i.qty, 0); }
+/* ═══════════════════════════════════════════════════════════════
+   CHECKOUT SECUENCIAL PASO A PASO (Estilo La Foresta)
+   ═══════════════════════════════════════════════════════════════ */
 
 function openCheckout() {
-  if (!cart.length) { document.getElementById("coleccion").scrollIntoView({ behavior: "smooth" }); return; }
+  if (!cart.length) {
+    alert("Su bolsa está vacía. Añada un arreglo primero.");
+    document.getElementById("coleccion")?.scrollIntoView({ behavior: "smooth" });
+    return;
+  }
+  
   S.code = localStorage.getItem("soho_draft_code") || ("SF-" + Date.now());
   localStorage.setItem("soho_draft_code", S.code);
-  $("checkout-overlay").classList.remove("hidden");
+
+  const flow = $("checkout-flow");
+  if (!flow) return;
+  
+  flow.classList.remove("hidden");
+  setTimeout(() => flow.classList.add("open"), 10);
   document.body.style.overflow = "hidden";
-  renderZones();
-  renderSummary();
-  restaurarProgreso();
-  goStep(1);
+
+  restaurarProgresoCheckout();
   cargarCupos(S.calendarDate);
+  actualizarVistaHoyCheckout();
+  
+  const savedStep = localStorage.getItem("soho_checkout_step") || "step-1";
+  goToStep(savedStep);
+
   window.trackEvent4D("begin_checkout", { value: flowersSubtotal(), order_code: S.code });
 }
 
-function closeCheckout() { $("checkout-overlay").classList.add("hidden"); document.body.style.overflow = "auto"; }
+function closeCheckout() {
+  const flow = $("checkout-flow");
+  if (!flow) return;
+  flow.classList.remove("open");
+  setTimeout(() => {
+    flow.classList.add("hidden");
+    document.body.style.overflow = "";
+  }, 600);
+}
+
+function goToStep(stepId) {
+  document.querySelectorAll(".checkout-step").forEach(s => s.classList.remove("active"));
+  const target = $(stepId);
+  if (target) {
+    target.classList.add("active");
+    target.scrollTop = 0;
+  }
+  localStorage.setItem("soho_checkout_step", stepId);
+  guardarProgresoCheckout();
+
+  if (stepId === "step-time") renderHorariosInteligentes();
+  if (stepId === "step-calendario") renderCalendarView();
+  if (stepId === "step-6") renderResumenFinal();
+
+  window.trackEvent4D("checkout_step", { step_target: stepId });
+}
+
+/* ── Validaciones individuales ── */
+function validarEmailYContinuar() {
+  const email = $("buyer-email")?.value.trim() || "";
+  const phone = $("buyer-whatsapp")?.value.trim() || "";
+
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    alert("Por favor ingresa un correo electrónico válido para tu confirmación.");
+    $("buyer-email")?.focus();
+    return;
+  }
+  if (!phone || phone.replace(/\D/g, "").length < 8) {
+    alert("Por favor ingresa tu número de WhatsApp o teléfono de contacto.");
+    $("buyer-whatsapp")?.focus();
+    return;
+  }
+
+  window.trackEvent4D("lead_captured", {
+    email,
+    step_name: "step-buyer-email",
+    cart_value: flowersSubtotal(),
+    name: $("sender-name")?.value || ""
+  });
+
+  goToStep("step-2");
+}
+
+function validarReceptorYContinuar() {
+  const name = $("receiver-name")?.value.trim() || "";
+  if (name.length < 2) {
+    alert("Por favor indica el nombre de la persona que recibirá las flores.");
+    $("receiver-name")?.focus();
+    return;
+  }
+  goToStep("step-3");
+}
+
+function seleccionarModalidad(m) {
+  S.logistics = m;
+  if (m === "envio") {
+    goToStep("step-zona");
+  } else {
+    S.zone = null;
+    goToStep("step-quien-retira");
+  }
+  guardarProgresoCheckout();
+}
+
+function seleccionarZona(id) {
+  S.zone = CONFIG.zones.find(z => z.id === id) || null;
+  guardarProgresoCheckout();
+  goToStep("step-direccion");
+}
+
+function confirmarDireccion() {
+  const addr = $("address")?.value.trim() || "";
+  if (addr.length < 5) {
+    alert("Por favor ingresa la dirección completa de entrega (calle, número y depto/casa).");
+    $("address")?.focus();
+    return;
+  }
+  goToStep("step-fecha");
+}
+
+function confirmarRetiro() {
+  const pick = $("pickup-name")?.value.trim() || "";
+  if (pick.length < 3) {
+    alert("Por favor ingresa el nombre de la persona que retirará en el taller.");
+    $("pickup-name")?.focus();
+    return;
+  }
+  goToStep("step-fecha");
+}
+
+function regresarDesdeFecha() {
+  if (S.logistics === "envio") goToStep("step-direccion");
+  else goToStep("step-quien-retira");
+}
+
+function seleccionarFecha(modo) {
+  if (modo === "futuro") {
+    goToStep("step-calendario");
+  } else {
+    S.date = modo;
+    S.express = false;
+    S.time = "";
+    guardarProgresoCheckout();
+    goToStep("step-time");
+  }
+}
+
+/* ── Calendario Visual Pantalla Completa ── */
+function renderCalendarView() {
+  const grid = $("calendar-grid-view"), title = $("cal-month-title-view");
+  if (!grid || !title) return;
+
+  const today = hoyDate();
+  const y = S.calendarDate.getFullYear(), m = S.calendarDate.getMonth();
+  const meses = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+  title.innerText = `${meses[m]} ${y}`;
+
+  if ($("cal-prev-btn")) $("cal-prev-btn").style.visibility = (y === today.getFullYear() && m === today.getMonth()) ? "hidden" : "visible";
+
+  const firstDay = new Date(y, m, 1).getDay();
+  const daysInMonth = new Date(y, m + 1, 0).getDate();
+  const parts = [];
+
+  for (let g = 0; g < firstDay; g++) parts.push("<div></div>");
+
+  for (let day = 1; day <= daysInMonth; day++) {
+    const d = new Date(y, m, day); d.setHours(0, 0, 0, 0);
+    const t = new Date(today); t.setHours(0, 0, 0, 0);
+    const dateStr = `${y}-${String(m + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    const libres = getCuposLibres(dateStr);
+
+    if (d.getTime() < t.getTime()) {
+      parts.push(`<div class="py-4 text-center opacity-25 font-serif text-lg">${day}</div>`);
+    } else if (libres <= 0) {
+      parts.push(`<div class="py-4 font-serif text-lg line-through opacity-30 text-center">${day}</div>`);
+    } else {
+      const badge = libres <= 5 ? `<span class="text-[9px] text-goldink block leading-none mt-1">Disp ${libres}</span>` : "";
+      parts.push(`
+        <button onclick="seleccionarDiaCalendario('${dateStr}')" class="py-3 font-serif text-xl font-bold hover:text-gold transition flex flex-col items-center justify-center border border-ink/10 hover:border-gold bg-white">
+          <span>${day}</span>${badge}
+        </button>`);
+    }
+  }
+  grid.innerHTML = parts.join("");
+}
+
+function cambiarMesCalendario(dir) {
+  S.calendarDate.setMonth(S.calendarDate.getMonth() + dir);
+  cargarCupos(S.calendarDate);
+  renderCalendarView();
+}
+
+function seleccionarDiaCalendario(dateStr) {
+  S.date = dateStr;
+  S.express = false;
+  S.time = "";
+  guardarProgresoCheckout();
+  goToStep("step-time");
+}
+
+/* ── Horarios ── */
+function renderHorariosInteligentes() {
+  const cont = $("time-slots-view");
+  const label = $("time-chosen-date-label");
+  if (!cont) return;
+
+  const isHoy = S.date === "hoy" || S.date === hoyStr();
+  const now = hoyDate();
+  const h = now.getHours() + now.getMinutes() / 60;
+
+  if (label) {
+    label.innerText = isHoy ? `Entregas para HOY (${hoyDate().toLocaleDateString("es-CL", { day: "numeric", month: "long" })})` : `Fecha de entrega elegida: ${S.date}`;
+  }
+
+  let html = "";
+  if (!isHoy) {
+    html = ["Mañana (10:00–13:00)", "Mediodía (14:00–17:00)", "Tarde (18:00–21:00)"].map(t => `
+      <button onclick="definirHorario('${t}', false)" class="step-option-big w-full py-5 text-sm uppercase tracking-widest font-bold bg-white text-ink">${t}</button>
+    `).join("");
+  } else {
+    if (h < 9)  html += `<button onclick="definirHorario('Mañana (10:00–13:00)', false)" class="step-option-big w-full py-5 text-sm uppercase tracking-widest font-bold bg-white text-ink">Mañana (10:00–13:00)</button>`;
+    if (h < 11) html += `<button onclick="definirHorario('Mediodía (14:00–17:00)', false)" class="step-option-big w-full py-5 text-sm uppercase tracking-widest font-bold bg-white text-ink">Mediodía (14:00–17:00)</button>`;
+    if (h < 14) html += `<button onclick="definirHorario('Tarde (18:00–21:00)', false)" class="step-option-big w-full py-5 text-sm uppercase tracking-widest font-bold bg-white text-ink">Tarde (18:00–21:00)</button>`;
+
+    if (S.logistics === "envio") {
+      let start = now.getMinutes() === 0 ? now.getHours() + 1 : now.getHours() + 2;
+      start = Math.max(10, start);
+      if (start <= 20) {
+        html += `<p class="micro text-goldink pt-4 pb-1 text-left">Express 1–2 h (+50% solo sobre el envío):</p>`;
+        for (let a = start; a <= 20; a++) {
+          const tName = `Express (${String(a).padStart(2,"0")}:00–${String(a+1).padStart(2,"0")}:00)`;
+          html += `<button onclick="definirHorario('${tName}', true)" class="step-option-big w-full py-4 text-xs uppercase tracking-widest font-bold border border-gold text-goldink bg-white">${tName}</button>`;
+        }
+      }
+    }
+  }
+
+  cont.innerHTML = html || `<p class="text-sm opacity-50 py-4">Cupos cerrados para hoy. Elige otra fecha.</p><button onclick="goToStep('step-fecha')" class="btn-line micro py-4 px-6 mt-2">Ver fechas disponibles</button>`;
+}
+
+function regresarDesdeTime() {
+  if (S.date === "hoy" || S.date === "manana") goToStep("step-fecha");
+  else goToStep("step-calendario");
+}
+
+function definirHorario(slot, isExp) {
+  S.time = slot;
+  S.express = isExp;
+  guardarProgresoCheckout();
+  setTimeout(() => goToStep("step-4"), 300);
+}
+
+function validarTelefonoYContinuar() {
+  const phone = $("receiver-phone")?.value.trim() || "";
+  if (phone.replace(/\D/g, "").length < 8) {
+    alert("Por favor ingresa un teléfono válido para quien recibe.");
+    $("receiver-phone")?.focus();
+    return;
+  }
+  goToStep("step-6");
+}
+
+/* ── Resumen Final ── */
+function renderResumenFinal() {
+  const cont = $("checkout-final-summary");
+  if (!cont) return;
+
+  const t = calcTotals();
+  const isEnvio = S.logistics === "envio";
+
+  cont.innerHTML = `
+    <div class="border-b border-ink/10 pb-4 mb-4">
+      <p class="micro opacity-50 mb-2">Arreglos Seleccionados</p>
+      ${cart.map(i => `
+        <div class="flex justify-between items-center text-sm mb-1">
+          <span>${i.name} <span class="opacity-50">×${i.qty}</span></span>
+          <span class="font-bold">${clp(i.price * i.qty)}</span>
+        </div>
+      `).join("")}
+    </div>
+
+    <div class="space-y-1.5 text-sm pb-4 border-b border-ink/10">
+      <div class="flex justify-between text-xs opacity-70">
+        <span>Destino</span>
+        <span class="font-bold">${isEnvio ? (S.zone?.name || "Envío a Domicilio") : "Retiro en Atelier"}</span>
+      </div>
+      <div class="flex justify-between text-xs opacity-70">
+        <span>Fecha y Hora</span>
+        <span>${S.date} · ${S.time}</span>
+      </div>
+      <div class="flex justify-between pt-2">
+        <span>Subtotal Flores</span>
+        <span>${clp(t.sub)}</span>
+      </div>
+      <div class="flex justify-between">
+        <span>Costo Logística</span>
+        <span>${isEnvio ? clp(t.ship) : "$0"}</span>
+      </div>
+      ${t.bonus ? `
+        <div class="flex justify-between text-goldink">
+          <span>Envío de Cortesía</span>
+          <span>−${clp(t.bonus)}</span>
+        </div>` : ""}
+    </div>
+
+    <div class="flex justify-between items-end pt-2">
+      <span class="micro opacity-60">Total a Pagar</span>
+      <span class="display text-3xl md:text-4xl text-goldink font-bold">${clp(t.total)}</span>
+    </div>
+  `;
+}
+
+function actualizarVistaHoyCheckout() {
+  const btn = $("btn-fecha-hoy");
+  if (!btn) return;
+  const libres = getCuposLibres(hoyStr());
+  const now = hoyDate();
+
+  if (libres <= 0 || now.getHours() >= CONFIG.expressCutoffHour) {
+    btn.innerHTML = `<span class="line-through opacity-40">Hoy</span><span class="text-[9px] text-goldink block mt-1">Agotado</span>`;
+    btn.disabled = true;
+    btn.classList.add("opacity-40", "cursor-not-allowed");
+  } else if (libres <= 5) {
+    btn.innerHTML = `Hoy <span class="text-[9px] text-goldink block mt-1">Solo ${libres} cupos</span>`;
+    btn.disabled = false;
+    btn.classList.remove("opacity-40", "cursor-not-allowed");
+  } else {
+    btn.innerHTML = `Hoy`;
+    btn.disabled = false;
+    btn.classList.remove("opacity-40", "cursor-not-allowed");
+  }
+}
+
+/* ── Persistencia Paso a Paso ── */
+function guardarProgresoCheckout() {
+  const data = {
+    senderName:    $("sender-name")?.value    || "",
+    buyerEmail:    $("buyer-email")?.value    || "",
+    buyerWhatsapp: $("buyer-whatsapp")?.value || "",
+    receiverName:  $("receiver-name")?.value  || "",
+    receiverPhone: $("receiver-phone")?.value || "",
+    address:       $("address")?.value        || "",
+    deliveryNote:  $("delivery-note")?.value  || "",
+    pickupName:    $("pickup-name")?.value    || "",
+    cardMessage:   $("card-message")?.value   || "",
+    isAnon:        $("envio-anonimo")?.checked || false
+  };
+
+  localStorage.setItem("soho_checkout_inputs", JSON.stringify(data));
+  localStorage.setItem("soho_logistics", S.logistics);
+  if (S.zone && S.zone.id) localStorage.setItem("soho_zone_id", String(S.zone.id));
+  else localStorage.removeItem("soho_zone_id");
+  localStorage.setItem("soho_date", S.date || "");
+  localStorage.setItem("soho_time", S.time || "");
+  localStorage.setItem("soho_express", String(S.express));
+}
+
+function restaurarProgresoCheckout() {
+  const data = JSON.parse(localStorage.getItem("soho_checkout_inputs") || "{}");
+  const fields = ["sender-name", "buyer-email", "buyer-whatsapp", "receiver-name", "receiver-phone", "address", "delivery-note", "pickup-name", "card-message"];
+  
+  fields.forEach(id => {
+    const el = $(id);
+    const key = id.replace(/-([a-z])/g, (_, l) => l.toUpperCase());
+    if (el && data[key] !== undefined) el.value = data[key];
+  });
+
+  if ($("envio-anonimo") && data.isAnon !== undefined) {
+    $("envio-anonimo").checked = data.isAnon;
+  }
+
+  S.logistics = localStorage.getItem("soho_logistics") || "envio";
+  const savedZone = localStorage.getItem("soho_zone_id");
+  if (savedZone) S.zone = CONFIG.zones.find(z => z.id === parseInt(savedZone, 10)) || null;
+  S.date = localStorage.getItem("soho_date") || "";
+  S.time = localStorage.getItem("soho_time") || "";
+  S.express = localStorage.getItem("soho_express") === "true";
+}
 
 /* ═══ VALIDACIÓN ESTRICTA DE CAMPOS ═══ */
 function validarPaso(paso) {
