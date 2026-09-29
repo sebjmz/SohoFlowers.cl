@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pedido Confirmado | Soho Flowers</title>
-<meta name="description" content="Tu pedido Soho Flowers fue confirmado. Revisa tu correo, sigue tu arreglo en vivo y coordina detalles por WhatsApp.">
+<title>Seguimiento de Pedido | Soho Flowers</title>
+<meta name="description" content="Sigue en tiempo real la preparación y entrega de tu arreglo floral Soho Flowers.">
 <meta name="robots" content="noindex">
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -16,128 +16,243 @@ tailwind.config = { theme: { extend: {
 }}};
 </script>
 <style>
-  .display{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:500;letter-spacing:-.01em}
-  .micro{font-size:9px;letter-spacing:.22em;text-transform:uppercase;font-weight:700}
-  .btn-gold{background:#C5A059;color:#0E1512;transition:.25s}
+  .display{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:400;letter-spacing:-.02em}
+  .micro{font-size:9px;letter-spacing:.25em;text-transform:uppercase;font-weight:700}
+  .btn-gold{background:#C5A059;color:#0E1512;transition:.3s ease}
   .btn-gold:hover{background:#0E1512;color:#C5A059}
-  .btn-line{border:1px solid rgba(14,21,18,.25);transition:.25s}
+  .btn-line{border:1px solid rgba(14,21,18,.15);transition:.3s ease}
   .btn-line:hover{border-color:#C5A059;color:#C5A059}
-  .fade-up{opacity:0;transform:translateY(14px);animation:fu .7s cubic-bezier(.16,1,.3,1) forwards}
+  .step-node{transition:all .5s cubic-bezier(.16,1,.3,1)}
+  .step-node.active{border-color:#C5A059;background:#C5A059;color:#0E1512}
+  .step-node.done{border-color:#0E1512;background:#0E1512;color:#FBFAF8}
+  .fade-up{opacity:0;transform:translateY(12px);animation:fu .7s cubic-bezier(.16,1,.3,1) forwards}
   @keyframes fu{to{opacity:1;transform:none}}
-  @keyframes dash{to{stroke-dashoffset:0}}
-  .check-circle{stroke-dasharray:151;stroke-dashoffset:151;animation:dash .9s ease forwards}
-  .check-mark{stroke-dasharray:40;stroke-dashoffset:40;animation:dash .5s .8s ease forwards}
 </style>
 </head>
-<body class="bg-ivory text-ink font-sans antialiased min-h-screen flex flex-col">
+<body class="bg-ivory text-ink font-sans antialiased min-h-screen flex flex-col justify-between">
 
 <!-- ══════════ HEADER ══════════ -->
-<header class="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between w-full">
-  <a href="/" class="flex items-center" aria-label="Soho Flowers - Ir al inicio">
-    <img src="img/soho-flowers-logo-negro-fondo-transparente.webp" alt="Soho Flowers" class="h-8 md:h-10 mix-blend-multiply">
-  </a>
-  <a href="/seguimiento.html" class="micro opacity-60 hover:opacity-100">Seguir mi pedido</a>
+<header class="border-b border-ink/5 bg-ivory/80 backdrop-blur-md sticky top-0 z-30">
+  <div class="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
+    <a href="/" class="flex items-center" aria-label="Ir al inicio">
+      <img src="img/soho-flowers-logo-negro-fondo-transparente.webp" alt="Soho Flowers" class="h-8 md:h-9 mix-blend-multiply">
+    </a>
+    <a href="/" class="micro opacity-60 hover:opacity-100 transition">Volver a la tienda</a>
+  </div>
 </header>
 
-<!-- ══════════ CONFIRMACIÓN ══════════ -->
-<main class="flex-1 w-full max-w-2xl mx-auto px-4 py-12 md:py-16 text-center">
+<!-- ══════════ MAIN ══════════ -->
+<main class="max-w-2xl mx-auto px-4 py-12 md:py-16 w-full flex-1">
 
-  <!-- Check animado -->
-  <div class="mx-auto w-16 h-16 rounded-full border border-gold/40 flex items-center justify-center fade-up">
-    <svg viewBox="0 0 52 52" class="w-9 h-9" aria-hidden="true">
-      <circle cx="26" cy="26" r="24" fill="none" stroke="#C5A059" stroke-width="2" class="check-circle"/>
-      <path fill="none" stroke="#C5A059" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" d="M14 27l8 8 16-16" class="check-mark"/>
-    </svg>
-  </div>
-
-  <p class="micro text-goldink mt-6 fade-up" style="animation-delay:.1s">Pago acreditado</p>
-  <h1 class="display text-5xl md:text-6xl mt-2 fade-up" style="animation-delay:.15s">Orden Confirmada.</h1>
-  <p class="text-sm opacity-70 mt-4 max-w-md mx-auto fade-up" style="animation-delay:.2s">
-    Su transacción ha sido procesada con éxito. El pedido ya ingresó a nuestro sistema para su preparación.
-  </p>
-
-  <!-- CÓDIGO DE PEDIDO (estilo "Generando ID…") -->
-  <div class="mt-8 inline-block border border-ink/10 rounded-2xl bg-white px-10 py-6 fade-up" style="animation-delay:.3s">
-    <p class="micro opacity-50">Código de pedido</p>
-    <p id="order-code" class="display text-4xl md:text-5xl text-goldink mt-1">Generando ID…</p>
-    <p id="pay-method" class="micro opacity-40 mt-3"></p>
-  </div>
-
-  <!-- PASOS NUMERADOS (modelo La Foresta, adaptado a Soho) -->
-  <div class="mt-10 grid grid-cols-1 md:grid-cols-3 gap-6 text-left fade-up" style="animation-delay:.4s">
-    <div class="border border-ink/10 rounded-2xl bg-white p-5">
-      <p class="display text-3xl text-goldink">01.</p>
-      <p class="micro mt-1">Correo · Comprobante</p>
-      <p class="text-xs opacity-60 mt-2">El detalle de compra fue enviado a su email con la tarjeta y las coordenadas de entrega. (Revise Spam)</p>
-    </div>
-    <div class="border border-ink/10 rounded-2xl bg-white p-5">
-      <p class="display text-3xl text-goldink">02.</p>
-      <p class="micro mt-1">Taller · Evidencia</p>
-      <p class="text-xs opacity-60 mt-2">Preparamos su arreglo y le enviamos la fotografía del ramo antes de que salga a reparto.</p>
-    </div>
-    <div class="border border-ink/10 rounded-2xl bg-white p-5">
-      <p class="display text-3xl text-goldink">03.</p>
-      <p class="micro mt-1">Logística · Ejecución</p>
-      <p class="text-xs opacity-60 mt-2">Despacho o retiro programado según las coordenadas indicadas, con seguimiento en vivo hasta la puerta.</p>
+  <!-- Buscador de Código -->
+  <div class="text-center mb-10 fade-up">
+    <p class="micro text-goldink">Logística y Taller</p>
+    <h1 class="display text-4xl md:text-5xl mt-2">Seguimiento en Vivo</h1>
+    <p class="text-xs opacity-60 mt-2">Ingresa tu código de pedido para ver el estado de confección y despacho.</p>
+    
+    <div class="mt-6 flex max-w-md mx-auto border-b border-ink/20 focus-within:border-gold transition">
+      <input id="input-code" type="text" placeholder="Ej: SF-17906127" class="w-full bg-transparent py-3 px-2 text-center font-mono text-base uppercase outline-none placeholder:normal-case placeholder:font-sans placeholder:opacity-40">
+      <button onclick="buscarPedido()" class="btn-gold micro px-6 py-3 tracking-widest">Consultar</button>
     </div>
   </div>
 
-  <!-- ACCIONES -->
-  <div class="mt-10 flex flex-col md:flex-row gap-3 justify-center fade-up" style="animation-delay:.5s">
-    <a id="track-link" href="/seguimiento.html" class="btn-gold micro px-8 py-4 rounded-full">Seguir mi pedido en vivo</a>
-    <a href="/" class="btn-line micro px-8 py-4 rounded-full">Volver al inicio</a>
-    <a id="wa-link" href="#" target="_blank" class="btn-line micro px-8 py-4 rounded-full">Soporte WhatsApp</a>
+  <!-- Estado de Carga / Error -->
+  <div id="loading" class="hidden text-center py-10 fade-up">
+    <p class="micro text-goldink animate-pulse">Consultando taller y logística…</p>
+  </div>
+  <div id="error-msg" class="hidden text-center py-8 border border-ink/10 rounded-2xl bg-white p-6 fade-up">
+    <p class="display text-2xl text-ink">No encontramos ese pedido</p>
+    <p class="text-xs opacity-60 mt-2">Revisa que el código coincida con el de tu comprobante o consúltanos directo por WhatsApp.</p>
   </div>
 
-  <!-- SELLO DE CONFIANZA -->
-  <div class="mt-12 fade-up" style="animation-delay:.6s">
-    <p class="text-2xl text-gold tracking-[.3em]">★★★★★</p>
-    <p class="micro opacity-50 mt-2">Respaldado por nuestro compromiso de excelencia floral</p>
+  <!-- Contenedor del Pedido -->
+  <div id="order-card" class="hidden space-y-10 fade-up">
+
+    <!-- Encabezado del Pedido -->
+    <div class="border-b border-ink/10 pb-6 text-center">
+      <p class="micro opacity-50">Identificador</p>
+      <p id="disp-code" class="display text-4xl md:text-5xl text-goldink mt-1 font-mono"></p>
+      <p id="disp-date-slot" class="text-xs opacity-70 mt-2"></p>
+    </div>
+
+    <!-- Línea de Tiempo de Estados -->
+    <div class="py-4">
+      <div class="relative flex justify-between items-center max-w-md mx-auto">
+        <div class="absolute left-0 top-1/2 -translate-y-1/2 h-0.5 w-full bg-ink/10 -z-0"></div>
+        <div id="line-progress" class="absolute left-0 top-1/2 -translate-y-1/2 h-0.5 bg-gold transition-all duration-700 -z-0" style="width: 0%"></div>
+
+        <!-- Paso 1 -->
+        <div class="flex flex-col items-center bg-ivory px-2 z-10">
+          <div id="node-recibido" class="step-node w-8 h-8 rounded-full border border-ink/20 flex items-center justify-center micro font-bold text-xs bg-ivory">01</div>
+          <span class="micro mt-2 text-[8px]">En Taller</span>
+        </div>
+
+        <!-- Paso 2 -->
+        <div class="flex flex-col items-center bg-ivory px-2 z-10">
+          <div id="node-transito" class="step-node w-8 h-8 rounded-full border border-ink/20 flex items-center justify-center micro font-bold text-xs bg-ivory">02</div>
+          <span class="micro mt-2 text-[8px]">En Camino</span>
+        </div>
+
+        <!-- Paso 3 -->
+        <div class="flex flex-col items-center bg-ivory px-2 z-10">
+          <div id="node-entregado" class="step-node w-8 h-8 rounded-full border border-ink/20 flex items-center justify-center micro font-bold text-xs bg-ivory">03</div>
+          <span class="micro mt-2 text-[8px]">Entregado</span>
+        </div>
+      </div>
+      <p id="disp-status-text" class="text-center display text-2xl mt-6 text-ink"></p>
+    </div>
+
+    <!-- Evidencia Fotográfica (si el taller subió foto) -->
+    <div id="photo-block" class="hidden border border-ink/10 rounded-2xl bg-white p-6 text-center">
+      <p class="micro text-goldink mb-2">Evidencia de Taller</p>
+      <h3 class="display text-2xl mb-4">Fotografía de su Arreglo</h3>
+      <div class="relative max-h-96 overflow-hidden rounded-xl bg-ink/5 inline-block w-full">
+        <img id="disp-photo" src="" alt="Evidencia del arreglo" class="w-full h-auto object-cover max-h-96 rounded-xl">
+      </div>
+      <p class="text-[10px] opacity-40 mt-3 font-sans">Fotografía tomada antes de salir a despacho</p>
+    </div>
+
+    <!-- Coordenadas del Pedido -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
+      <div class="border border-ink/10 rounded-2xl bg-white p-5">
+        <p class="micro opacity-50">Destinatario</p>
+        <p id="disp-receiver" class="display text-2xl mt-1 text-ink">—</p>
+        <p id="disp-logistics" class="text-xs opacity-60 mt-2 font-mono whitespace-pre-line"></p>
+      </div>
+
+      <div class="border border-ink/10 rounded-2xl bg-white p-5 flex flex-col justify-between">
+        <div>
+          <p class="micro opacity-50">Tarjeta Dedicatoria</p>
+          <p id="disp-card" class="text-xs italic opacity-80 mt-2 font-serif leading-relaxed">"Sin mensaje impreso"</p>
+        </div>
+        <div class="mt-4 pt-3 border-t border-ink/5 flex items-center justify-between">
+          <span class="micro opacity-50">Garantía</span>
+          <span class="micro text-goldink">Frescura 100%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Botón de Asistencia -->
+    <div class="text-center pt-4">
+      <a id="wa-btn" href="#" target="_blank" class="btn-line micro px-8 py-4 rounded-full inline-block">Consultar con el taller por WhatsApp</a>
+    </div>
+
   </div>
 </main>
 
 <!-- ══════════ FOOTER ══════════ -->
-<footer class="bg-ink text-ivory/60 py-6">
+<footer class="bg-ink text-ivory/50 py-6 border-t border-ink/10">
   <div class="max-w-4xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-3 micro">
-    <img src="img/soho-flowers-logo-negro-fondo-transparente.webp" alt="Soho Flowers" class="h-7 brightness-0 invert opacity-90">
+    <img src="img/soho-flowers-logo-negro-fondo-transparente.webp" alt="Soho Flowers" class="h-7 brightness-0 invert opacity-80">
     <span>Viña del Mar · Región de Valparaíso</span>
   </div>
 </footer>
 
-<script src="app.js"></script>
 <script>
-  /* ── Código de pedido: URL → localStorage → fallback ── */
-  const params = new URLSearchParams(location.search);
-  const code = params.get("code")
-    || localStorage.getItem("soho_last_order")
-    || localStorage.getItem("soho_draft_code")
-    || "";
+const API = "https://api.sohoflowers.cl";
+const $ = id => document.getElementById(id);
 
-  setTimeout(() => {
-    document.getElementById("order-code").innerText = code || ("SF-" + Date.now().toString().slice(-8));
-  }, 900);
+async function buscarPedido(codeParam) {
+  const code = (codeParam || $("input-code").value || "").trim().toUpperCase();
+  if (!code) return;
 
-  /* ── Detección de pasarela acreditada ── */
-  const pm = document.getElementById("pay-method");
-  if (params.get("payment_id"))            pm.innerText = "Acreditado vía PayPal · Orden internacional";
-  else if (params.get("payment_status"))   pm.innerText = "Acreditado vía Webpay · " + params.get("payment_status");
-  else                                     pm.innerText = "Acreditado vía pasarela segura";
+  $("input-code").value = code;
+  $("loading").classList.remove("hidden");
+  $("error-msg").classList.add("hidden");
+  $("order-card").classList.add("hidden");
 
-  /* ── Links con contexto del pedido ── */
-  const waBase = "https://wa.me/56951134778?text=";
-  if (code){
-    try { localStorage.setItem("soho_last_order", code); } catch(e) {}
-    document.getElementById("track-link").href = "/seguimiento.html?code=" + encodeURIComponent(code);
-    document.getElementById("wa-link").href = waBase + encodeURIComponent("Hola, acabo de comprar el pedido " + code + " y quería coordinar un detalle:");
+  try {
+    let order = null;
+    // 1. Consulta al endpoint público de rastreo
+    const r = await fetch(`${API}/api/tracking?code=${encodeURIComponent(code)}`);
+    if (r.ok) {
+      const data = await r.json();
+      order = data.order || data;
+    }
+
+    // 2. Si no responde el endpoint de tracking, intentar lectura estándar de orden
+    if (!order || !order.id) {
+      const r2 = await fetch(`${API}/api/order?code=${encodeURIComponent(code)}`);
+      if (r2.ok) {
+        const data2 = await r2.json();
+        order = data2.order || data2;
+      }
+    }
+
+    $("loading").classList.add("hidden");
+
+    if (!order || (!order.id && !order.code && !order.status)) {
+      $("error-msg").classList.remove("hidden");
+      return;
+    }
+
+    renderOrder(order, code);
+  } catch(e) {
+    $("loading").classList.add("hidden");
+    $("error-msg").classList.remove("hidden");
+  }
+}
+
+function renderOrder(o, rawCode) {
+  const code = o.id || o.code || rawCode;
+  const status = (o.status || "recibido").toLowerCase();
+  
+  $("disp-code").innerText = code;
+  $("disp-date-slot").innerText = `${o.fecha_entrega || o.date || "Fecha agendada"} · ${o.horario_entrega || o.time_slot || o.slot || "Bloque acordado"}`;
+  $("disp-receiver").innerText = o.receptor || o.receiver_name || o.receiver || "Destinatario";
+  $("disp-logistics").innerText = o.logistica_detalle || o.logistics_detail || o.address || "Envío coordinado con taller";
+  
+  if (o.card_text || o.cardMessage) {
+    $("disp-card").innerText = `"${o.card_text || o.cardMessage}"`;
   } else {
-    document.getElementById("wa-link").href = waBase + encodeURIComponent("Hola, acabo de hacer una compra y necesito soporte:");
+    $("disp-card").innerText = "Sin tarjeta dedicatoria";
   }
 
-  /* ── Limpieza post-compra (app.js ya registró el evento purchase al cargar) ── */
-  localStorage.removeItem("soho_cart");
-  localStorage.removeItem("soho_draft_code");
-  localStorage.removeItem("soho_checkout_inputs");
-  if (typeof updateCartUI === "function") updateCartUI();
+  // Línea de tiempo
+  const nodes = { recibido: $("node-recibido"), transito: $("node-transito"), entregado: $("node-entregado") };
+  const line = $("line-progress");
+  
+  Object.values(nodes).forEach(n => { n.className = "step-node w-8 h-8 rounded-full border border-ink/20 flex items-center justify-center micro font-bold text-xs bg-ivory"; });
+
+  if (status === "entregado") {
+    nodes.recibido.className = "step-node w-8 h-8 rounded-full border border-ink flex items-center justify-center micro font-bold text-xs done";
+    nodes.transito.className = "step-node w-8 h-8 rounded-full border border-ink flex items-center justify-center micro font-bold text-xs done";
+    nodes.entregado.className = "step-node w-8 h-8 rounded-full border border-gold flex items-center justify-center micro font-bold text-xs active";
+    line.style.width = "100%";
+    $("disp-status-text").innerText = "Arreglo Entregado con Éxito";
+  } else if (status === "transito") {
+    nodes.recibido.className = "step-node w-8 h-8 rounded-full border border-ink flex items-center justify-center micro font-bold text-xs done";
+    nodes.transito.className = "step-node w-8 h-8 rounded-full border border-gold flex items-center justify-center micro font-bold text-xs active";
+    line.style.width = "50%";
+    $("disp-status-text").innerText = "Arreglo en Camino al Destino";
+  } else {
+    nodes.recibido.className = "step-node w-8 h-8 rounded-full border border-gold flex items-center justify-center micro font-bold text-xs active";
+    line.style.width = "0%";
+    $("disp-status-text").innerText = "En Taller Floral · Confección de Autor";
+  }
+
+  // Fotografía de evidencia
+  if (o.photo || o.foto) {
+    $("disp-photo").src = o.photo || o.foto;
+    $("photo-block").classList.remove("hidden");
+  } else {
+    $("photo-block").classList.add("hidden");
+  }
+
+  // Link WhatsApp de soporte
+  $("wa-btn").href = `https://wa.me/56951134778?text=${encodeURIComponent("Hola Soho Flowers, consulto por el estado de mi pedido " + code + ":")}`;
+
+  $("order-card").classList.remove("hidden");
+}
+
+// Auto-búsqueda por URL o localStorage
+document.addEventListener("DOMContentLoaded", () => {
+  const params = new URLSearchParams(location.search);
+  const code = params.get("code") || localStorage.getItem("soho_last_order") || "";
+  if (code) {
+    buscarPedido(code);
+  }
+});
 </script>
 </body>
 </html>
