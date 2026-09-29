@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://sohoflowers.cl/sitemap.xml
