@@ -47,6 +47,39 @@ tailwind.config = { theme: { extend: {
   .fade-up { opacity: 0; transform: translateY(14px); animation: fu 1s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
   @keyframes fu { to { opacity: 1; transform: none; } }
   .hide-scroll::-webkit-scrollbar { display: none; }
+
+  #checkout-flow {
+  transform: translateY(100%);
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease;
+}
+#checkout-flow.open {
+  transform: translateY(0);
+}
+.checkout-step {
+  display: none;
+  animation: fadeInStep 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  max-height: 85vh;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.checkout-step::-webkit-scrollbar { display: none; }
+.checkout-step.active {
+  display: flex;
+}
+@keyframes fadeInStep {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.step-option-big {
+  border: 1px solid rgba(14, 21, 18, 0.15);
+  transition: all 0.3s ease;
+}
+.step-option-big:hover, .step-option-big.selected {
+  border-color: #C5A059;
+  background: rgba(197, 160, 89, 0.06);
+}
+  
 </style>
 </head>
 <body class="bg-ivory text-ink font-sans antialiased">
@@ -199,100 +232,229 @@ tailwind.config = { theme: { extend: {
   </div>
 </aside>
 
-<!-- ══════════ CHECKOUT RÁPIDO (3 pasos) ══════════ -->
-<div id="checkout-overlay" class="fixed inset-0 z-50 hidden">
-  <div class="absolute inset-0 bg-ink/60 backdrop-blur-sm" onclick="closeCheckout()"></div>
-  <div class="absolute inset-x-0 bottom-0 md:inset-0 md:flex md:items-center md:justify-center pointer-events-none">
-    <div class="pointer-events-auto bg-ivory w-full md:max-w-2xl md:rounded-3xl rounded-t-3xl max-h-[92vh] overflow-y-auto shadow-2xl">
-      <div class="sticky top-0 bg-ivory/95 backdrop-blur px-8 pt-8 pb-4 border-b border-ink/5 z-10">
-  <div class="flex items-center justify-between">
-    <h3 class="display text-4xl">Su pedido</h3>
-    <button onclick="closeCheckout()" class="micro opacity-40 hover:opacity-100 transition">Cerrar ✕</button>
+<!-- ══════════ CHECKOUT PANTALLA COMPLETA PASO A PASO ══════════ -->
+<div id="checkout-flow" class="fixed inset-0 bg-ivory text-ink z-[200] flex flex-col hidden overflow-y-auto">
+  
+  <!-- Header Minimalista Superior -->
+  <div class="px-6 md:px-12 py-6 flex justify-between items-center bg-ivory/90 backdrop-blur sticky top-0 z-20 border-b border-ink/5">
+    <img src="img/soho-flowers-logo-negro-fondo-transparente.webp" alt="Soho Flowers" class="h-8 md:h-10 mix-blend-multiply">
+    <button onclick="closeCheckout()" class="text-3xl md:text-4xl font-light opacity-40 hover:opacity-100 transition p-2" aria-label="Cerrar">✕</button>
   </div>
-  <div class="flex gap-6 mt-6 micro opacity-40">
-    <span id="prog-1" class="pb-2 border-b border-transparent transition-colors duration-300">01 Entrega</span>
-    <span id="prog-2" class="pb-2 border-b border-transparent transition-colors duration-300">02 Datos</span>
-    <span id="prog-3" class="pb-2 border-b border-transparent transition-colors duration-300">03 Pago</span>
-  </div>
-</div>
 
-      <!-- PASO 1: ENTREGA -->
-      <div id="step-1" class="p-6 space-y-5">
-        <div id="cart-summary" class="text-sm"></div>
-        <div>
-          <p class="micro mb-2">Modalidad</p>
-          <div class="flex gap-2">
-            <button onclick="setLogistics('envio')" id="mod-envio" class="chip on flex-1 py-3 micro rounded-full">Envío a domicilio</button>
-            <button onclick="setLogistics('retiro')" id="mod-retiro" class="chip flex-1 py-3 micro rounded-full">Retiro en atelier</button>
-          </div>
-        </div>
-        <div id="pickup-block" style="display:none">
-          <p class="micro mb-2">¿Quién pasará a retirar?</p>
-          <input id="pickup-name" placeholder="Nombre y apellido de quien retira" class="w-full border-b border-ink/20 rounded-none px-0 py-4 text-base bg-transparent transition-colors focus:border-gold focus:ring-0 placeholder:opacity-40" onblur="guardarProgreso()">
-        </div>
-        <div id="zone-block">
-          <p class="micro mb-2">Zona de entrega</p>
-          <div id="zone-chips" class="flex flex-wrap gap-2"></div>
-          <p id="zone-detail" class="text-[10px] opacity-50 mt-2"></p>
-          <textarea id="address" rows="2" placeholder="Dirección completa (calle, número, depto, referencia)" class="w-full mt-3 border border-ink/15 rounded-xl p-3 text-sm bg-white" onblur="guardarProgreso()"></textarea>
-        </div>
-        <div>
-          <p class="micro mb-2">Fecha</p>
-          <div class="flex gap-2 flex-wrap">
-            <button onclick="setDate('hoy')" id="date-hoy" class="chip px-5 py-3 micro rounded-full">Hoy</button>
-            <button onclick="setDate('manana')" id="date-manana" class="chip px-5 py-3 micro rounded-full">Mañana</button>
-            <button onclick="showCalendar()" class="chip px-5 py-3 micro rounded-full">Otro día →</button>
-            <input type="date" id="date-input" onchange="pickCalendarDay(this.value)" class="chip px-4 py-2 micro rounded-full bg-white">
-          </div>
-        </div>
-        <div>
-          <p class="micro mb-2">Bloque horario</p>
-          <div id="time-chips" class="flex flex-wrap gap-2"></div>
-        </div>
-        <div>
-          <p class="micro mb-2">Nota para el repartidor (opcional)</p>
-          <textarea id="delivery-note" rows="2" placeholder="Ej: depto 502, timbre azul, dejar en conserjería…" class="w-full border border-ink/15 rounded-xl p-3 text-sm bg-white" onblur="guardarProgreso()"></textarea>
-        </div>
-        <button onclick="goStep(2)" class="btn-gold w-full py-4 micro rounded-full">Continuar →</button>
-      </div>
+  <div class="flex-grow flex flex-col justify-start md:justify-center items-center px-6 py-10 relative">
 
-      <!-- PASO 2: DATOS -->
-      <div id="step-2" class="p-6 space-y-4 hidden">
-        <input id="buyer-email" type="email" autocomplete="email" placeholder="Tu correo (para la confirmación)" class="w-full border border-ink/15 rounded-xl p-3 text-sm bg-white" onblur="guardarProgreso()">
-        <input id="buyer-whatsapp" type="tel" autocomplete="tel" inputmode="tel" placeholder="Tu WhatsApp / teléfono de contacto" class="w-full border border-ink/15 rounded-xl p-3 text-sm bg-white" onblur="guardarProgreso()">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <input id="sender-name" autocomplete="name" placeholder="Quién envía" class="border border-ink/15 rounded-xl p-3 text-sm bg-white" onblur="guardarProgreso()">
-          <input id="receiver-name" placeholder="Quién recibe" class="border border-ink/15 rounded-xl p-3 text-sm bg-white" onblur="guardarProgreso()">
-        </div>
-        <input id="receiver-phone" type="tel" inputmode="tel" placeholder="Teléfono de quien recibe (para coordinar la entrega)" class="w-full border border-ink/15 rounded-xl p-3 text-sm bg-white" onblur="guardarProgreso()">
-        <label class="flex items-center gap-2 text-xs opacity-70"><input id="envio-anonimo" type="checkbox" class="accent-[#C5A059]" onchange="guardarProgreso()"> Entrega anónima ("Alguien que te quiere")</label>
-        <div>
-          <p class="micro mb-2">Tarjeta dedicatoria (opcional)</p>
-          <div class="flex gap-2 mb-2 flex-wrap">
-            <button onclick="writeMsg('condolencias')" class="chip px-3 py-1 micro rounded-full">Homenaje</button>
-            <button onclick="writeMsg('romance')" class="chip px-3 py-1 micro rounded-full">Romance</button>
-            <button onclick="writeMsg('cumpleanos')" class="chip px-3 py-1 micro rounded-full">Cumpleaños</button>
-            <button onclick="writeMsg('agradecimiento')" class="chip px-3 py-1 micro rounded-full">Agradecimiento</button>
-          </div>
-          <textarea id="card-message" rows="3" placeholder="Escribe tu mensaje o usa una inspiración…" class="w-full border border-ink/15 rounded-xl p-3 text-sm bg-white" onblur="guardarProgreso()"></textarea>
-        </div>
-        <div class="flex gap-2">
-          <button onclick="goStep(1)" class="btn-line flex-1 py-4 micro rounded-full">← Volver</button>
-          <button onclick="goStep(3)" class="btn-gold flex-1 py-4 micro rounded-full">Continuar →</button>
-        </div>
-      </div>
-
-      <!-- PASO 3: PAGO -->
-      <div id="step-3" class="p-6 space-y-4 hidden">
-        <div id="total-breakdown" class="border border-ink/10 rounded-2xl p-4 text-sm space-y-1 bg-white"></div>
-        <p class="micro opacity-50 text-center">Transacción protegida por encriptación bancaria</p>
-        <button onclick="payFlow()" class="btn-gold w-full py-4 micro rounded-full">Pagar con Webpay · hasta 12 cuotas sin interés</button>
-        <p class="micro text-center opacity-50 -mt-2">Débito, crédito y Redcompra nacional · sin costo adicional</p>
-        <div id="paypal-container"></div>
-        <button onclick="payPayPal()" class="btn-line w-full py-4 micro rounded-full">Pagar con PayPal · desde cualquier país (USD)</button>
-        <button onclick="goStep(2)" class="w-full py-2 micro opacity-50 hover:opacity-100">← Volver</button>
-      </div>
+    <!-- PASO 1: QUIÉN ENVÍA -->
+    <div id="step-1" class="checkout-step active flex-col items-center w-full max-w-lg text-center my-auto pb-12">
+      <span class="micro text-goldink mb-4 block">Paso 1 de 10</span>
+      <h3 class="display text-4xl md:text-6xl mb-8">¿Quién envía?</h3>
+      <input type="text" id="sender-name" oninput="guardarProgresoCheckout()" placeholder="Tu Nombre y Apellido" class="w-full bg-transparent border-b-2 border-ink/20 py-4 focus:border-gold text-center text-2xl md:text-3xl font-serif text-ink outline-none transition placeholder:opacity-30">
+      <button onclick="goToStep('step-buyer-email')" class="btn-gold micro w-full py-6 mt-12 text-sm tracking-[0.25em] rounded-none">Siguiente →</button>
     </div>
+
+    <!-- PASO 2: CORREO Y WHATSAPP COMPRADOR -->
+    <div id="step-buyer-email" class="checkout-step flex-col items-center w-full max-w-lg text-center my-auto pb-12">
+      <span class="micro text-goldink mb-4 block">Paso 2 de 10</span>
+      <h3 class="display text-4xl md:text-6xl mb-4">Tus Datos de Contacto</h3>
+      <p class="text-xs md:text-sm opacity-60 mb-8 max-w-md">Para el comprobante, boleta y seguimiento en vivo del despacho.</p>
+      
+      <div class="w-full space-y-6">
+        <input type="email" id="buyer-email" oninput="guardarProgresoCheckout()" placeholder="tu-correo@ejemplo.com" class="w-full bg-transparent border-b-2 border-ink/20 py-4 focus:border-gold text-center text-xl md:text-2xl font-serif text-ink outline-none transition placeholder:opacity-30">
+        <input type="tel" id="buyer-whatsapp" oninput="guardarProgresoCheckout()" placeholder="Tu WhatsApp (+56 9...)" class="w-full bg-transparent border-b-2 border-ink/20 py-4 focus:border-gold text-center text-xl md:text-2xl font-serif text-ink outline-none transition placeholder:opacity-30">
+      </div>
+
+      <button onclick="validarEmailYContinuar()" class="btn-gold micro w-full py-6 mt-12 text-sm tracking-[0.25em] rounded-none">Siguiente →</button>
+      <button onclick="goToStep('step-1')" class="micro opacity-40 hover:opacity-100 border-b border-ink/30 pb-1 mt-6">← Volver</button>
+    </div>
+
+    <!-- PASO 3: QUIÉN RECIBE -->
+    <div id="step-2" class="checkout-step flex-col items-center w-full max-w-lg text-center my-auto pb-12">
+      <span class="micro text-goldink mb-4 block">Paso 3 de 10</span>
+      <h3 class="display text-4xl md:text-6xl mb-8">¿Quién recibe?</h3>
+      <input type="text" id="receiver-name" oninput="guardarProgresoCheckout()" placeholder="Nombre de esa persona especial" class="w-full bg-transparent border-b-2 border-ink/20 py-4 focus:border-gold text-center text-2xl md:text-3xl font-serif text-ink outline-none transition placeholder:opacity-30">
+      <button onclick="validarReceptorYContinuar()" class="btn-gold micro w-full py-6 mt-12 text-sm tracking-[0.25em] rounded-none">Siguiente →</button>
+      <button onclick="goToStep('step-buyer-email')" class="micro opacity-40 hover:opacity-100 border-b border-ink/30 pb-1 mt-6">← Volver</button>
+    </div>
+
+    <!-- PASO 4: MODALIDAD -->
+    <div id="step-3" class="checkout-step flex-col items-center w-full max-w-lg text-center my-auto pb-12">
+      <span class="micro text-goldink mb-4 block">Paso 4 de 10</span>
+      <h3 class="display text-4xl md:text-6xl mb-10">Modalidad de entrega</h3>
+      <div class="space-y-4 w-full">
+        <button onclick="seleccionarModalidad('envio')" class="step-option-big w-full py-6 text-sm uppercase tracking-widest font-bold bg-white text-ink">Envío a domicilio</button>
+        <button onclick="seleccionarModalidad('retiro')" class="step-option-big w-full py-6 text-sm uppercase tracking-widest font-bold bg-white text-ink">Retiro en taller (Reñaca)</button>
+      </div>
+      <button onclick="goToStep('step-2')" class="micro opacity-40 hover:opacity-100 border-b border-ink/30 pb-1 mt-8">← Volver</button>
+    </div>
+
+    <!-- PASO 5: ZONA DE ENTREGA (Solo Envío) -->
+    <div id="step-zona" class="checkout-step flex-col items-center w-full max-w-lg text-center my-auto pb-12">
+      <span class="micro text-goldink mb-4 block">Paso 5 de 10</span>
+      <h3 class="display text-4xl md:text-5xl mb-4">Comuna o Sector</h3>
+      <p class="text-xs opacity-60 mb-6">Selecciona el área de despacho de tu destinatario:</p>
+      
+      <div class="space-y-3 w-full text-left" id="zone-cards-container">
+        <button onclick="seleccionarZona(1)" class="step-option-big w-full p-5 flex flex-col gap-1 text-left bg-white">
+          <div class="flex justify-between items-center w-full">
+            <span class="text-xs uppercase tracking-widest font-bold">1. Zona Central</span>
+            <span class="display text-xl text-goldink">+$3.500</span>
+          </div>
+          <span class="text-[11px] opacity-60">Reñaca Centro, Los Almendros, Jardín del Mar, Los Pinos</span>
+        </button>
+
+        <button onclick="seleccionarZona(2)" class="step-option-big w-full p-5 flex flex-col gap-1 text-left bg-white">
+          <div class="flex justify-between items-center w-full">
+            <span class="text-xs uppercase tracking-widest font-bold">2. Zona Local</span>
+            <span class="display text-xl text-goldink">+$5.000</span>
+          </div>
+          <span class="text-[11px] opacity-60">Reñaca Norte, Montemar, Higuerillas, Gómez Carreño, Glorias Navales</span>
+        </button>
+
+        <button onclick="seleccionarZona(3)" class="step-option-big w-full p-5 flex flex-col gap-1 text-left bg-white">
+          <div class="flex justify-between items-center w-full">
+            <span class="text-xs uppercase tracking-widest font-bold">3. Zona Intermedia</span>
+            <span class="display text-xl text-goldink">+$7.500</span>
+          </div>
+          <span class="text-[11px] opacity-60">Viña Centro y Cerros, Reñaca Alto, Concón Los Romeros, Costa de Montemar</span>
+        </button>
+
+        <button onclick="seleccionarZona(4)" class="step-option-big w-full p-5 flex flex-col gap-1 text-left bg-white">
+          <div class="flex justify-between items-center w-full">
+            <span class="text-xs uppercase tracking-widest font-bold">4. Zona Extendida</span>
+            <span class="display text-xl text-goldink">+$10.000</span>
+          </div>
+          <span class="text-[11px] opacity-60">Mantagua, Chorrillos, Valparaíso Plan y Cerros, Quilpué Centro</span>
+        </button>
+
+        <button onclick="seleccionarZona(5)" class="step-option-big w-full p-5 flex flex-col gap-1 text-left bg-white">
+          <div class="flex justify-between items-center w-full">
+            <span class="text-xs uppercase tracking-widest font-bold">5. Zona Extendida+</span>
+            <span class="display text-xl text-goldink">+$15.000</span>
+          </div>
+          <span class="text-[11px] opacity-60">Quintero, Curauma, Placilla, El Belloto</span>
+        </button>
+      </div>
+
+      <button onclick="goToStep('step-3')" class="micro opacity-40 hover:opacity-100 border-b border-ink/30 pb-1 mt-8">← Volver</button>
+    </div>
+
+    <!-- PASO 6A: DIRECCIÓN EXACTA (Solo Envío) -->
+    <div id="step-direccion" class="checkout-step flex-col items-center w-full max-w-lg text-center my-auto pb-12">
+      <span class="micro text-goldink mb-4 block">Paso 6 de 10</span>
+      <h3 class="display text-4xl md:text-5xl mb-6">Dirección de Entrega</h3>
+      <input type="text" id="address" oninput="guardarProgresoCheckout()" placeholder="Calle, número, departamento o referencia" class="w-full bg-transparent border-b-2 border-ink/20 py-4 focus:border-gold text-center text-xl md:text-2xl font-serif text-ink outline-none transition placeholder:opacity-30 mt-4">
+      <input type="text" id="delivery-note" oninput="guardarProgresoCheckout()" placeholder="Instrucción repartidor (ej: depto 502, dejar en conserjería)" class="w-full bg-transparent border-b border-ink/10 py-4 focus:border-gold text-center text-sm font-sans text-ink outline-none transition placeholder:opacity-30 mt-4 mb-8">
+      
+      <button onclick="confirmarDireccion()" class="btn-gold micro w-full py-6 text-sm tracking-[0.25em] rounded-none">Confirmar Dirección →</button>
+      <button onclick="goToStep('step-zona')" class="micro opacity-40 hover:opacity-100 border-b border-ink/30 pb-1 mt-6">← Volver</button>
+    </div>
+
+    <!-- PASO 6B: QUIÉN RETIRA (Solo Retiro) -->
+    <div id="step-quien-retira" class="checkout-step flex-col items-center w-full max-w-lg text-center my-auto pb-12">
+      <span class="micro text-goldink mb-4 block">Paso 6 de 10</span>
+      <h3 class="display text-4xl md:text-5xl mb-6">¿Quién retirará en taller?</h3>
+      <input type="text" id="pickup-name" oninput="guardarProgresoCheckout()" placeholder="Nombre completo de quien retira" class="w-full bg-transparent border-b-2 border-ink/20 py-4 focus:border-gold text-center text-xl md:text-2xl font-serif text-ink outline-none transition placeholder:opacity-30 mb-8">
+      
+      <button onclick="confirmarRetiro()" class="btn-gold micro w-full py-6 text-sm tracking-[0.25em] rounded-none">Confirmar →</button>
+      <button onclick="goToStep('step-3')" class="micro opacity-40 hover:opacity-100 border-b border-ink/30 pb-1 mt-6">← Volver</button>
+    </div>
+
+    <!-- PASO 7: FECHA DE ENTREGA -->
+    <div id="step-fecha" class="checkout-step flex-col items-center w-full max-w-lg text-center my-auto pb-12">
+      <span class="micro text-goldink mb-4 block">Paso 7 de 10</span>
+      <h3 class="display text-4xl md:text-6xl mb-10">Fecha de entrega</h3>
+      <div class="space-y-4 w-full">
+        <button id="btn-fecha-hoy" onclick="seleccionarFecha('hoy')" class="step-option-big w-full py-6 text-sm uppercase tracking-widest font-bold bg-white text-ink">Hoy</button>
+        <button onclick="seleccionarFecha('manana')" class="step-option-big w-full py-6 text-sm uppercase tracking-widest font-bold bg-white text-ink">Mañana</button>
+        <button onclick="seleccionarFecha('futuro')" class="step-option-big w-full py-6 text-sm uppercase tracking-widest font-bold bg-white text-ink">Elegir en Calendario →</button>
+      </div>
+      <button onclick="regresarDesdeFecha()" class="micro opacity-40 hover:opacity-100 border-b border-ink/30 pb-1 mt-8">← Volver</button>
+    </div>
+
+    <!-- PASO 7B: CALENDARIO -->
+    <div id="step-calendario" class="checkout-step flex-col items-center w-full max-w-lg text-center my-auto pb-12">
+      <span class="micro text-goldink mb-4 block">Paso 7 de 10</span>
+      <h3 class="display text-4xl md:text-5xl mb-6">Selecciona el día</h3>
+      
+      <div class="flex justify-between items-center w-full mb-6 px-4">
+        <button onclick="cambiarMesCalendario(-1)" id="cal-prev-btn" class="display text-3xl opacity-60 hover:opacity-100 p-2">‹</button>
+        <span id="cal-month-title-view" class="display text-3xl"></span>
+        <button onclick="cambiarMesCalendario(1)" id="cal-next-btn" class="display text-3xl opacity-60 hover:opacity-100 p-2">›</button>
+      </div>
+
+      <div class="grid grid-cols-7 gap-2 w-full text-center micro opacity-40 mb-3">
+        <span>Do</span><span>Lu</span><span>Ma</span><span>Mi</span><span>Ju</span><span>Vi</span><span>Sá</span>
+      </div>
+      <div id="calendar-grid-view" class="grid grid-cols-7 gap-2 w-full mb-6"></div>
+      
+      <button onclick="goToStep('step-fecha')" class="micro opacity-40 hover:opacity-100 border-b border-ink/30 pb-1 mt-6">← Volver a Fechas</button>
+    </div>
+
+    <!-- PASO 8: HORARIO DE ENTREGA -->
+    <div id="step-time" class="checkout-step flex-col items-center w-full max-w-lg text-center my-auto pb-12">
+      <span class="micro text-goldink mb-4 block">Paso 8 de 10</span>
+      <h3 class="display text-4xl md:text-5xl mb-2">Bloque horario</h3>
+      <p id="time-chosen-date-label" class="micro text-goldink mb-8"></p>
+      
+      <div id="time-slots-view" class="space-y-3 w-full mb-6"></div>
+      <button onclick="regresarDesdeTime()" class="micro opacity-40 hover:opacity-100 border-b border-ink/30 pb-1 mt-6">← Volver</button>
+    </div>
+
+    <!-- PASO 9: TARJETA DEDICATORIA -->
+    <div id="step-4" class="checkout-step flex-col items-center w-full max-w-lg text-center my-auto pb-12">
+      <span class="micro text-goldink mb-4 block">Paso 9 de 10</span>
+      <h3 class="display text-4xl md:text-5xl mb-2">Tarjeta dedicatoria</h3>
+      <p class="text-xs opacity-60 mb-6 font-sans">Totalmente opcional. Puedes redactarla ahora o usar una inspiración.</p>
+      
+      <textarea id="card-message" oninput="guardarProgresoCheckout()" rows="4" placeholder="Escribe aquí tu dedicatoria..." class="w-full bg-white border border-ink/15 p-5 text-base md:text-lg font-serif text-ink outline-none focus:border-gold transition rounded-none"></textarea>
+      
+      <div class="flex flex-wrap gap-2 justify-center mt-4">
+        <button onclick="escribirMensaje('romance')" class="chip px-4 py-2 micro">Romance</button>
+        <button onclick="escribirMensaje('condolencias')" class="chip px-4 py-2 micro">Homenaje</button>
+        <button onclick="escribirMensaje('cumpleanos')" class="chip px-4 py-2 micro">Cumpleaños</button>
+        <button onclick="escribirMensaje('agradecimiento')" class="chip px-4 py-2 micro">Agradecimiento</button>
+      </div>
+
+      <label class="flex items-center gap-3 mt-8 p-4 border border-ink/10 bg-white cursor-pointer w-full text-left">
+        <input type="checkbox" id="envio-anonimo" class="w-5 h-5 accent-[#C5A059]" onchange="guardarProgresoCheckout()">
+        <span class="text-xs opacity-75"><b>Sorpresa Anónima:</b> No revelaremos tu nombre al destinatario.</span>
+      </label>
+
+      <button onclick="goToStep('step-5')" class="btn-gold micro w-full py-6 mt-10 text-sm tracking-[0.25em] rounded-none">Siguiente →</button>
+      <button onclick="goToStep('step-time')" class="micro opacity-40 hover:opacity-100 border-b border-ink/30 pb-1 mt-6">← Volver</button>
+    </div>
+
+    <!-- PASO 10: TELÉFONO DE DESTINO -->
+    <div id="step-5" class="checkout-step flex-col items-center w-full max-w-lg text-center my-auto pb-12">
+      <span class="micro text-goldink mb-4 block">Paso 10 de 10</span>
+      <h3 class="display text-4xl md:text-5xl mb-2">Teléfono de destino</h3>
+      <p class="text-xs opacity-60 mb-8 max-w-md">Solo se utiliza si el repartidor necesita coordinar la entrega en conserjería o portón.</p>
+      
+      <input type="tel" id="receiver-phone" oninput="guardarProgresoCheckout()" placeholder="Teléfono (+56 9...)" class="w-full bg-transparent border-b-2 border-ink/20 py-4 focus:border-gold text-center text-2xl font-serif text-ink outline-none transition placeholder:opacity-30 mb-8">
+      
+      <button onclick="validarTelefonoYContinuar()" class="btn-gold micro w-full py-6 text-sm tracking-[0.25em] rounded-none">Confirmar y Ver Pago →</button>
+      <button onclick="goToStep('step-4')" class="micro opacity-40 hover:opacity-100 border-b border-ink/30 pb-1 mt-6">← Volver</button>
+    </div>
+
+    <!-- PASO FINAL: RESUMEN Y PASARELAS -->
+    <div id="step-6" class="checkout-step flex-col items-center w-full max-w-lg text-center my-auto pb-12">
+      <span class="micro text-goldink mb-4 block">Paso Final</span>
+      <h3 class="display text-4xl md:text-6xl mb-6">Confirmar y Pagar</h3>
+      
+      <!-- Resumen Detallado -->
+      <div id="checkout-final-summary" class="w-full bg-white border border-ink/10 p-6 mb-8 text-left space-y-3"></div>
+
+      <!-- Pasarelas -->
+      <div class="w-full space-y-4">
+        <button onclick="payFlow()" class="btn-gold micro w-full py-6 text-sm tracking-[0.2em] rounded-none">Pagar con Webpay (hasta 12 cuotas)</button>
+        <p class="micro opacity-50 -mt-2">Débito, Crédito y Redcompra nacional sin recargo</p>
+
+        <div id="paypal-container" class="w-full min-h-[120px] hidden"></div>
+        <button onclick="payPayPal()" id="btn-paypal-trigger" class="btn-line micro w-full py-5 text-xs tracking-widest rounded-none">Pagar con PayPal (Internacional USD)</button>
+      </div>
+
+      <button onclick="goToStep('step-5')" class="micro opacity-40 hover:opacity-100 border-b border-ink/30 pb-1 mt-10">← Modificar datos del pedido</button>
+    </div>
+
   </div>
 </div>
 
